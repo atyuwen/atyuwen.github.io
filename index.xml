@@ -1,24 +1,25 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Hugo Hermit</title>
+    <title>C&#43;&#43; Minor</title>
     <link>https://atyuwen.github.io/</link>
-    <description>Recent content on Hugo Hermit</description>
+    <description>Recent content on C&#43;&#43; Minor</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
-    <lastBuildDate>Fri, 27 Dec 2019 18:50:55 +0800</lastBuildDate>
+    <lastBuildDate>Sat, 28 Dec 2019 21:02:15 +0800</lastBuildDate>
     
 	<atom:link href="https://atyuwen.github.io/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
-      <title>Antialiased Line</title>
-      <link>https://atyuwen.github.io/posts/antialiased-line/</link>
-      <pubDate>Fri, 27 Dec 2019 18:50:55 +0800</pubDate>
+      <title>About C&#43;&#43; Minor</title>
+      <link>https://atyuwen.github.io/about/</link>
+      <pubDate>Sat, 28 Dec 2019 21:02:15 +0800</pubDate>
       
-      <guid>https://atyuwen.github.io/posts/antialiased-line/</guid>
-      <description></description>
+      <guid>https://atyuwen.github.io/about/</guid>
+      <description>I&#39;m Yuwen Wu (or atyuwen), a senior graphics &amp;amp; engine programmer at Netease Games. I&#39;m currently working on an in-house cross-platform game engine named Messiah Engine.
+Over the past decade, I gained a lot from so many excellent blogs. Now it&#39;s 2020s, I decide to start my own blog: C++ Minor, and wish I could also share something usefull to the community &amp;mdash; mostly about algorithms and computer graphics. Following are some additional things I&#39;d like to declare:</description>
     </item>
     
   </channel>

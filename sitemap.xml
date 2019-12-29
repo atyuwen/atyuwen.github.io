@@ -1,20 +1,15 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
-    <loc>https://atyuwen.github.io/posts/antialiased-line/</loc>
-    <lastmod>2019-12-27T18:50:55+08:00</lastmod>
+    <loc>https://atyuwen.github.io/about/</loc>
+    <lastmod>2019-12-28T21:02:15+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://atyuwen.github.io/</loc>
-    <lastmod>2019-12-27T18:50:55+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://atyuwen.github.io/posts/</loc>
-    <lastmod>2019-12-27T18:50:55+08:00</lastmod>
+    <lastmod>2019-12-28T21:02:15+08:00</lastmod>
   </url>
   
   <url>
