@@ -18,13 +18,13 @@
 			<description>For engine programmers, there are many cases you have to draw lines on screen, e.g. rendering a grid on the ground, drawing bounding boxes and other helper objects. Usually it&#39;s not a problem if you are very used to the jaggies, but recently I can&#39;t stand it anymore, my eyes complain to me that they want anti-aliased lines. After a quick search on google, it surprises me that there is no existing handy code piece can meet my needs.</description>
 			<content type="html"><![CDATA[<p>For engine programmers, there are many cases you have to draw lines on screen, e.g. rendering a grid on the ground, drawing bounding boxes and other helper objects. Usually it's not a problem if you are very used to the jaggies, but recently I can't stand it anymore, my eyes complain to me that they want anti-aliased lines. After a quick search on google, it surprises me that there is no existing handy code piece can meet my needs. So, it's time to do research!</p>
 <hr>
-<p>The first thing comes to my eye is an old article &ldquo;Fast Prefiltered Lines&rdquo; <sup id="fnref:1"><a href="#fn:1" class="footnote-ref" role="doc-noteref">1</a></sup>. It describes a method that can draw pretty high quality anti-aliased lines with constant cost, since the filter is pre-calculated. It's a great article but I can't use it directly for several reasons:</p>
+<p>The first thing comes to my eye is an old article &ldquo;Fast Prefiltered Lines&rdquo; <sup id="fnref:1"><a href="#fn:1" class="footnote-ref" role="doc-noteref">1</a></sup>. It describes a method that can draw pretty high quality anti-aliased lines with fixed cost, since the filter is pre-calculated. It's a great article but I can't use it directly for several reasons:</p>
 <ul>
 <li>It's mainly about drawing 2D lines, so perspective projection is not considered.</li>
 <li>It uses CPU to calculate edge equations, but I want to keep changes to a minimum in my cpp code.</li>
 <li>It uses shader uniforms to pass the edge equations to pixel shader, which means you can only draw a single line in one DP.</li>
 </ul>
-<p>Fortunately now the programmable pipeline is way more flexible than in 2005. With <strong>geometry shader</strong>, we can do it much easier. Following shows the final rendered image, and I'll describe the details below.</p>
+<p>Fortunately now the programmable pipeline is way more flexible than in 2005. With <strong>geometry shader</strong>, we can do it much easier. Following shows the final rendered image, and I'll describe the details in below.</p>
 <figure>
     <img src="/posts/images/messiah-line.png" width="500px"/> 
 </figure>
