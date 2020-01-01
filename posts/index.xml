@@ -88,11 +88,10 @@
     <img src="/posts/images/line-filter.png" width="500px"/> 
 </figure>
 
-<p>Now here is the full PS code:</p>
+<p>Now here is the full PS code, and we are done!</p>
 <div class="highlight"><pre class="chroma"><code class="language-cpp" data-lang="cpp"><span class="n">float4</span> <span class="nf">AALinePS</span><span class="p">(</span><span class="n">in</span> <span class="n">GeometryOutput</span> <span class="n">IN</span><span class="p">)</span> <span class="o">:</span> <span class="n">SV_Target</span>
 <span class="p">{</span>
-	<span class="kt">float</span> <span class="n">d</span> <span class="o">=</span> <span class="n">abs</span><span class="p">(</span><span class="n">IN</span><span class="p">.</span><span class="n">TexCoord</span><span class="p">.</span><span class="n">x</span><span class="p">)</span><span class="p">;</span>
-	<span class="kt">float</span> <span class="n">a</span> <span class="o">=</span> <span class="n">exp2</span><span class="p">(</span><span class="o">-</span><span class="mf">2.7</span> <span class="o">*</span> <span class="n">d</span> <span class="o">*</span> <span class="n">d</span><span class="p">)</span><span class="p">;</span>
+	<span class="kt">float</span> <span class="n">a</span> <span class="o">=</span> <span class="n">exp2</span><span class="p">(</span><span class="o">-</span><span class="mf">2.7</span> <span class="o">*</span> <span class="n">IN</span><span class="p">.</span><span class="n">TexCoord</span><span class="p">.</span><span class="n">x</span> <span class="o">*</span> <span class="n">IN</span><span class="p">.</span><span class="n">TexCoord</span><span class="p">.</span><span class="n">x</span><span class="p">)</span><span class="p">;</span>
 	<span class="k">return</span> <span class="n">float4</span><span class="p">(</span><span class="n">LineColor</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span><span class="p">;</span>
 <span class="p">}</span>
 </code></pre></div><section class="footnotes" role="doc-endnotes">
