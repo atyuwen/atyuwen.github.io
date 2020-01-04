@@ -13,17 +13,23 @@
   </url>
   
   <url>
+    <loc>https://atyuwen.github.io/tags/graphics/</loc>
+    <lastmod>2020-01-01T09:20:55+08:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://atyuwen.github.io/posts/</loc>
+    <lastmod>2020-01-01T09:20:55+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://atyuwen.github.io/tags/</loc>
     <lastmod>2020-01-01T09:20:55+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://atyuwen.github.io/about/</loc>
     <lastmod>2019-12-28T21:02:15+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://atyuwen.github.io/tags/</loc>
   </url>
   
 </urlset>

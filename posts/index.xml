@@ -79,7 +79,7 @@
 <span class="p">}</span>
 </code></pre></div><p>The above code is pretty straightforward, except two places I would like to explain further:</p>
 <ul>
-<li>The highlighted <em>section 1</em> does a manual near-plane clipping to ensure all lines passed out are <strong>internal lines</strong>. This is necessary because it's meaningless to calculate screen position for points behind camera, which will mess things up.</li>
+<li>The highlighted <em>section 1</em> does a manual near-plane clipping to ensure all lines passed out are <strong>internal lines</strong>. This is necessary because it's meaningless to calculate screen position for points behind the camera, which will mess things up.</li>
 <li>The keyword <strong>noperspective</strong> in <em>section 2</em> is to tell the rasterizer to interpolate <code>TexCoord</code> in screen space rather than in world space, which is exactly what we want, since we are drawing lines with constant width in pixels.</li>
 </ul>
 <hr>
