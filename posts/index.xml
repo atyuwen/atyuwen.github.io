@@ -6,8 +6,94 @@
 		<generator>Hugo -- gohugo.io</generator>
 		<language>en-us</language>
 		<copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
-		<lastBuildDate>Wed, 01 Jan 2020 09:20:55 +0800</lastBuildDate>
+		<lastBuildDate>Mon, 20 Jan 2020 09:58:17 +0800</lastBuildDate>
 		<atom:link href="https://atyuwen.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
+		
+		<item>
+			<title>Accurate Normal Reconstruction from Depth Buffer</title>
+			<link>https://atyuwen.github.io/posts/normal-reconstruction/</link>
+			<pubDate>Mon, 20 Jan 2020 09:58:17 +0800</pubDate>
+			
+			<guid>https://atyuwen.github.io/posts/normal-reconstruction/</guid>
+			<description>Months ago I read a nice article 1 about normal reconstruction by János Turánszki (@turanszkij), which reminded me that I had also tackled this problem before, but for a different purpose. While Turánszki reconstructed normal from depth buffer for better SSAO, I was aimed for rendering decals.
+In screen-space decals rendering, normal buffer is required to reject pixels projected onto near-perpendicular surfaces. But back then I was working on a forward pipeline, so no normal buffer was outputted.</description>
+			<content type="html"><![CDATA[<p>Months ago I read a nice article <sup id="fnref:1"><a href="#fn:1" class="footnote-ref" role="doc-noteref">1</a></sup> about normal reconstruction by János Turánszki (@turanszkij), which reminded me that I had also tackled this problem before, but for a different purpose. While Turánszki reconstructed normal from depth buffer for better SSAO, I was aimed for rendering decals.</p>
+<p>In screen-space decals rendering, normal buffer is required to reject pixels projected onto near-perpendicular surfaces. But back then I was working on a forward pipeline, so no normal buffer was outputted. It seemed the best choice was to reconstruct it directly from depth buffer, as long as we could avoid introducing errors, which was not easy though. Fortunately, accurate normal reconstruction is impossible in theory but possible in practice, we eventually found a way inspired by Humus's SDAA idea <sup id="fnref:2"><a href="#fn:2" class="footnote-ref" role="doc-noteref">2</a></sup>, which is more accurate but also more expensive than Turánszki's method. However, it's worth the cost because decals are highly sensitive to the reconstruction errors. Following shows decals rendered in purple with different normal reconstruction strategies.</p>
+<figure>
+    <img src="/posts/images/normal-reconstruction-decals.png"/> 
+</figure>
+
+<ul>
+<li>Left: simply uses cross(ddx, ddy), note the artifacts in areas labeled with <strong>a</strong>, <strong>b</strong>, and <strong>c</strong>.</li>
+<li>Middle: the <em>improved approach</em> <sup id="fnref:1"><a href="#fn:1" class="footnote-ref" role="doc-noteref">1</a></sup>, the artifacts in <strong>a</strong> disappeared, but those in <strong>b</strong> and <strong>c</strong> still exist.</li>
+<li>Right: our <em>accurate method</em>, all artifacts are eliminated.</li>
+</ul>
+<hr>
+<p>To understand how those artifacts occur and disappear, I drawn a picture to illustrate the two typical types of discontinuities in depth buffer, in which the eye and arrow denote the camera position and direction respectively, and the blue dots denote the depth samples.</p>
+<figure>
+    <img src="/posts/images/depth-discontinuities.png" width="600px"/> 
+</figure>
+
+<p>In figure (1), Turánszki's method works very well. 3 taps are enough to eliminate errors: since $|d-c|$ is less than $|b-c|$, we can say that point $c$ is more likely on segment $de$ rather than segment $ab$. But this is not the case in figure (2): although $|b-c| &lt; |d-c|$, the point $c$ is apparently on segment $de$ instead of $ab$. This observation perfectly explains why the <em>improved approach</em> can only remove part of the artifacts in decal rendering.</p>
+<p>So we can conclude that 3 taps (on each direction) is inadequate. Humus's SDAA <sup id="fnref:2"><a href="#fn:2" class="footnote-ref" role="doc-noteref">2</a></sup> uses 5 sample taps along with a second depth layer to calculate edge locations, here we can use the same 5-tap pattern to determinate whether $c$ is on $ab$ or $de$. (Unlike SDAA, we don't have to calculate the accurate edge location, so the second-depth buffer is not needed.) Following describes the method step by step.</p>
+<figure>
+    <img src="/posts/images/depth-discontinuities-2.png" width="600px"/> 
+</figure>
+
+<ul>
+<li>Extrapolate segment $ab$ to $c$, get a new point $c_1$.</li>
+<li>Extrapolate segment $ed$ to $c$, get a new point $c_2$.</li>
+<li>If $|c_1-c| &lt; |c_2-c|$, report $c$ is on $ab$, otherwise report $c$ is on $de$.</li>
+</ul>
+<p>Note this method can locate $c$ correctly in both figure (1) and (2). Now we can apply this algorithm twice to get horizontal and vertical derivatives, then a cross product gives you the normal accurately. Here is the pseudo shader code.</p>
+<div class="highlight"><pre class="chroma"><code class="language-cpp" data-lang="cpp"><span class="c1">// Try reconstructing normal accurately from depth buffer.
+</span><span class="c1"></span><span class="c1">// input DepthBuffer: stores linearized depth in range (0, 1).
+</span><span class="c1"></span><span class="c1">// 5 taps on each direction: | z | x | * | y | w |, &#39;*&#39; denotes the center sample.
+</span><span class="c1"></span><span class="n">float3</span> <span class="nf">ReconstructNormal</span><span class="p">(</span><span class="n">texture2D</span> <span class="n">DepthBuffer</span><span class="p">,</span> <span class="n">float2</span> <span class="nl">spos</span><span class="p">:</span> <span class="n">SV_Position</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">float2</span> <span class="n">stc</span> <span class="o">=</span> <span class="n">spos</span> <span class="o">/</span> <span class="n">ScreenSize</span><span class="p">;</span>
+    <span class="kt">float</span> <span class="n">depth</span> <span class="o">=</span> <span class="n">DepthBuffer</span><span class="p">.</span><span class="n">Sample</span><span class="p">(</span><span class="n">DepthBuffer_Sampler</span><span class="p">,</span> <span class="n">stc</span><span class="p">)</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+
+    <span class="n">float4</span> <span class="n">H</span><span class="p">;</span>
+    <span class="n">H</span><span class="p">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">DepthBuffer</span><span class="p">.</span><span class="n">Sample</span><span class="p">(</span><span class="n">DepthBuffer_Sampler</span><span class="p">,</span> <span class="n">stc</span> <span class="o">-</span> <span class="n">float2</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">ScreenSize</span><span class="p">.</span><span class="n">x</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="p">)</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+    <span class="n">H</span><span class="p">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">DepthBuffer</span><span class="p">.</span><span class="n">Sample</span><span class="p">(</span><span class="n">DepthBuffer_Sampler</span><span class="p">,</span> <span class="n">stc</span> <span class="o">+</span> <span class="n">float2</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">ScreenSize</span><span class="p">.</span><span class="n">x</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="p">)</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+    <span class="n">H</span><span class="p">.</span><span class="n">z</span> <span class="o">=</span> <span class="n">DepthBuffer</span><span class="p">.</span><span class="n">Sample</span><span class="p">(</span><span class="n">DepthBuffer_Sampler</span><span class="p">,</span> <span class="n">stc</span> <span class="o">-</span> <span class="n">float2</span><span class="p">(</span><span class="mi">2</span> <span class="o">/</span> <span class="n">ScreenSize</span><span class="p">.</span><span class="n">x</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="p">)</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+    <span class="n">H</span><span class="p">.</span><span class="n">w</span> <span class="o">=</span> <span class="n">DepthBuffer</span><span class="p">.</span><span class="n">Sample</span><span class="p">(</span><span class="n">DepthBuffer_Sampler</span><span class="p">,</span> <span class="n">stc</span> <span class="o">+</span> <span class="n">float2</span><span class="p">(</span><span class="mi">2</span> <span class="o">/</span> <span class="n">ScreenSize</span><span class="p">.</span><span class="n">x</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="p">)</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+    <span class="n">float2</span> <span class="n">he</span> <span class="o">=</span> <span class="n">abs</span><span class="p">(</span><span class="n">H</span><span class="p">.</span><span class="n">xy</span> <span class="o">*</span> <span class="n">H</span><span class="p">.</span><span class="n">zw</span> <span class="o">*</span> <span class="n">rcp</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">H</span><span class="p">.</span><span class="n">zw</span> <span class="o">-</span> <span class="n">H</span><span class="p">.</span><span class="n">xy</span><span class="p">)</span> <span class="o">-</span> <span class="n">depth</span><span class="p">)</span><span class="p">;</span>
+    <span class="n">float3</span> <span class="n">hDeriv</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">he</span><span class="p">.</span><span class="n">x</span> <span class="o">&gt;</span> <span class="n">he</span><span class="p">.</span><span class="n">y</span><span class="p">)</span>
+        <span class="n">hDeriv</span> <span class="o">=</span> <span class="n">Calculate</span> <span class="n">horizontal</span> <span class="n">derivative</span> <span class="n">of</span> <span class="n">world</span> <span class="n">position</span> <span class="n">from</span> <span class="n">taps</span> <span class="o">|</span> <span class="n">z</span> <span class="o">|</span> <span class="n">x</span> <span class="o">|</span>
+    <span class="k">else</span>
+        <span class="n">hDeriv</span> <span class="o">=</span> <span class="n">Calculate</span> <span class="n">horizontal</span> <span class="n">derivative</span> <span class="n">of</span> <span class="n">world</span> <span class="n">position</span> <span class="n">from</span> <span class="n">taps</span> <span class="o">|</span> <span class="n">y</span> <span class="o">|</span> <span class="n">w</span> <span class="o">|</span>
+
+    <span class="n">float4</span> <span class="n">V</span><span class="p">;</span>
+    <span class="n">V</span><span class="p">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">DepthBuffer</span><span class="p">.</span><span class="n">Sample</span><span class="p">(</span><span class="n">DepthBuffer_Sampler</span><span class="p">,</span> <span class="n">stc</span> <span class="o">-</span> <span class="n">float2</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">ScreenSize</span><span class="p">.</span><span class="n">y</span><span class="p">)</span><span class="p">)</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+    <span class="n">V</span><span class="p">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">DepthBuffer</span><span class="p">.</span><span class="n">Sample</span><span class="p">(</span><span class="n">DepthBuffer_Sampler</span><span class="p">,</span> <span class="n">stc</span> <span class="o">+</span> <span class="n">float2</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">ScreenSize</span><span class="p">.</span><span class="n">y</span><span class="p">)</span><span class="p">)</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+    <span class="n">V</span><span class="p">.</span><span class="n">z</span> <span class="o">=</span> <span class="n">DepthBuffer</span><span class="p">.</span><span class="n">Sample</span><span class="p">(</span><span class="n">DepthBuffer_Sampler</span><span class="p">,</span> <span class="n">stc</span> <span class="o">-</span> <span class="n">float2</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span> <span class="o">/</span> <span class="n">ScreenSize</span><span class="p">.</span><span class="n">y</span><span class="p">)</span><span class="p">)</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+    <span class="n">V</span><span class="p">.</span><span class="n">w</span> <span class="o">=</span> <span class="n">DepthBuffer</span><span class="p">.</span><span class="n">Sample</span><span class="p">(</span><span class="n">DepthBuffer_Sampler</span><span class="p">,</span> <span class="n">stc</span> <span class="o">+</span> <span class="n">float2</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span> <span class="o">/</span> <span class="n">ScreenSize</span><span class="p">.</span><span class="n">y</span><span class="p">)</span><span class="p">)</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+    <span class="n">float2</span> <span class="n">ve</span> <span class="o">=</span> <span class="n">abs</span><span class="p">(</span><span class="n">V</span><span class="p">.</span><span class="n">xy</span> <span class="o">*</span> <span class="n">V</span><span class="p">.</span><span class="n">zw</span> <span class="o">*</span> <span class="n">rcp</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">V</span><span class="p">.</span><span class="n">zw</span> <span class="o">-</span> <span class="n">V</span><span class="p">.</span><span class="n">xy</span><span class="p">)</span> <span class="o">-</span> <span class="n">depth</span><span class="p">)</span><span class="p">;</span>
+    <span class="n">float3</span> <span class="n">vDeriv</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">ve</span><span class="p">.</span><span class="n">x</span> <span class="o">&gt;</span> <span class="n">ve</span><span class="p">.</span><span class="n">y</span><span class="p">)</span>
+        <span class="n">vDeriv</span> <span class="o">=</span> <span class="n">Calculate</span> <span class="n">vertical</span> <span class="n">derivative</span> <span class="n">of</span> <span class="n">world</span> <span class="n">position</span> <span class="n">from</span> <span class="n">taps</span> <span class="o">|</span> <span class="n">z</span> <span class="o">|</span> <span class="n">x</span> <span class="o">|</span>
+    <span class="k">else</span>
+        <span class="n">vDeriv</span> <span class="o">=</span> <span class="n">Calculate</span> <span class="n">vertical</span> <span class="n">derivative</span> <span class="n">of</span> <span class="n">world</span> <span class="n">position</span> <span class="n">from</span> <span class="n">taps</span> <span class="o">|</span> <span class="n">y</span> <span class="o">|</span> <span class="n">w</span> <span class="o">|</span>
+
+    <span class="k">return</span> <span class="n">normalize</span><span class="p">(</span><span class="n">cross</span><span class="p">(</span><span class="n">hDeriv</span><span class="p">,</span> <span class="n">vDeriv</span><span class="p">)</span><span class="p">)</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div><p>At last I need to say that this <em>accurate method</em> may still fail on tiny triangles, but it's rarely noticeable. We've used this technique in decal rendering for years, our artists never complain about any artifact. Hope you find it useful.</p>
+<section class="footnotes" role="doc-endnotes">
+<hr>
+<ol>
+<li id="fn:1" role="doc-endnote">
+<p>János Turánszki, &ldquo;Improved normal reconstruction from depth&rdquo;. <a href="https://wickedengine.net/2019/09/22/improved-normal-reconstruction-from-depth">https://wickedengine.net/2019/09/22/improved-normal-reconstruction-from-depth</a>. <a href="#fnref:1" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+</li>
+<li id="fn:2" role="doc-endnote">
+<p>Emil Persson. “Second-Depth Antialiasing”. In GPU Pro 4, A K Peters, 2013, pp. 201–212. <a href="#fnref:2" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+</li>
+</ol>
+</section>
+]]></content>
+		</item>
 		
 		<item>
 			<title>Draw Anti-aliased Lines with Geometry Shader</title>

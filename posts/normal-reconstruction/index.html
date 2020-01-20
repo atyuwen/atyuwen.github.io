@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<meta name="theme-color" content="#a15a7e">
+	<meta name="msapplication-TileColor" content="#a15a7e">
+<meta itemprop="name" content="Accurate Normal Reconstruction from Depth Buffer">
+<meta itemprop="description" content="Months ago I read a nice article 1 about normal reconstruction by János Turánszki (@turanszkij), which reminded me that I had also tackled this problem before, but for a different purpose. While Turánszki reconstructed normal from depth buffer for better SSAO, I was aimed for rendering decals.
+In screen-space decals rendering, normal buffer is required to reject pixels projected onto near-perpendicular surfaces. But back then I was working on a forward pipeline, so no normal buffer was outputted.">
+<meta itemprop="datePublished" content="2020-01-20T09:58:17&#43;08:00" />
+<meta itemprop="dateModified" content="2020-01-20T09:58:17&#43;08:00" />
+<meta itemprop="wordCount" content="780">
+
+
+
+<meta itemprop="keywords" content="Graphics," /><meta property="og:title" content="Accurate Normal Reconstruction from Depth Buffer" />
+<meta property="og:description" content="Months ago I read a nice article 1 about normal reconstruction by János Turánszki (@turanszkij), which reminded me that I had also tackled this problem before, but for a different purpose. While Turánszki reconstructed normal from depth buffer for better SSAO, I was aimed for rendering decals.
+In screen-space decals rendering, normal buffer is required to reject pixels projected onto near-perpendicular surfaces. But back then I was working on a forward pipeline, so no normal buffer was outputted." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://atyuwen.github.io/posts/normal-reconstruction/" />
+<meta property="article:published_time" content="2020-01-20T09:58:17+08:00" />
+<meta property="article:modified_time" content="2020-01-20T09:58:17+08:00" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Accurate Normal Reconstruction from Depth Buffer"/>
+<meta name="twitter:description" content="Months ago I read a nice article 1 about normal reconstruction by János Turánszki (@turanszkij), which reminded me that I had also tackled this problem before, but for a different purpose. While Turánszki reconstructed normal from depth buffer for better SSAO, I was aimed for rendering decals.
+In screen-space decals rendering, normal buffer is required to reject pixels projected onto near-perpendicular surfaces. But back then I was working on a forward pipeline, so no normal buffer was outputted."/>
+
+	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+	<link rel="manifest" href="/site.webmanifest">
+	<link rel="mask-icon" href="/safari-pinned-tab.svg" color="">
+	<link rel="shortcut icon" href="/favicon.ico">
+
+	<title>Accurate Normal Reconstruction from Depth Buffer</title>
+	<link rel="stylesheet" href="https://atyuwen.github.io/css/style.min.5c69388648339329f0c230f6adbcb0cb6602c26ec504553c27ed022ca232d7de.css" integrity="sha256-XGk4hkgzkynwwjD2rbywy2YCwm7FBFU8J+0CLKIy194=" crossorigin="anonymous">
+	
+</head>
+
+<body id="page">
+	
+	<header id="site-header" class="animated slideInUp faster">
+		<div class="hdr-wrapper section-inner">
+			<div class="hdr-left">
+				<div class="site-branding">
+					<a href="https://atyuwen.github.io">C&#43;&#43; Minor</a>
+				</div>
+				<nav class="site-nav hide-in-mobile">
+					
+				<a href="https://atyuwen.github.io/posts/">Posts</a>
+				<a href="https://atyuwen.github.io/about/">About</a>
+
+				</nav>
+			</div>
+			<div class="hdr-right hdr-icons">
+				<span class="hdr-social hide-in-mobile"><a href="https://twitter.com/atyuwen" target="_blank" rel="noopener me" title="Twitter"><svg xmlns="http://www.w3.org/2000/svg" class="feather" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path></svg></a><a href="https://github.com/atyuwen" target="_blank" rel="noopener me" title="Github"><svg xmlns="http://www.w3.org/2000/svg" class="feather" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg></a><a href="https://www.linkedin.com/in/yuwen-wu-1105a039" target="_blank" rel="noopener me" title="Linkedin"><svg xmlns="http://www.w3.org/2000/svg" class="feather" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg></a><a href="https://www.zhihu.com/people/atyuwen" target="_blank" rel="noopener me" title="Zhihu"><svg xmlns="http://www.w3.org/2000/svg" class="feather" width="24" height="24" viewBox="0 0 1000 1000" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M351.791 429.531h192.945c0 45.367-21.387 71.939-21.387 71.939h-167.452c3.978 82.183 7.542 187.659 8.817 226.835h159.283c0 0-0.864 67.402-18.578 67.402s-279.98 0-279.98 0 16.851 88.141 39.318 127.054c0 0-83.605 4.511-112.122-106.962s-71.292-178.876-75.828-191.189c-4.536-12.313 24.628-5.833 36.941 0s68.051 25.924 84.253 103.696h86.571c1.166-49.287 4.597-200.336 3.515-226.835h-178.227c-25.276-18.147-33.702-71.939-33.702-71.939h203.709c-8.498-56.255-23.417-128.764-44.275-167.21-33.053-60.922-50.552-116.658-169.802-212.577 0 0-19.443-14.258 40.83-9.074s117.306 20.739 156.84 99.807c20.553 41.107 41.805 93.251 58.387 146.138l-0.055-0.185 167.856-193.264c0 0 22.036 51.848 5.833 108.881l-124.435 139.342-42.124-31.158-0.045-0.151c11.699 41.020 20.112 81.575 22.727 116.858 0.062 0.849 0.126 1.716 0.188 2.592zM584.919 809.966v-668.84h70.319l28.807-80.513 121.876 80.513h153.6v668.84h-374.602zM887.15 213.065h-79.837l-99.579-65.782-23.537 65.782h-24.855v522.261h227.807v-522.261z" transform="translate(0,1000) scale(1,-1)"/></svg></a></span><button id="menu-btn" class="hdr-btn" title="Menu"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-menu"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button>
+			</div>
+		</div>
+	</header>
+	<div id="mobile-menu" class="animated fast">
+		<ul>
+			<li><a href="https://atyuwen.github.io/posts/">Posts</a></li>
+			<li><a href="https://atyuwen.github.io/about/">About</a></li>
+		</ul>
+	</div>
+
+
+	<main class="site-main section-inner animated fadeIn faster">
+		<article class="thin">
+			<header class="post-header">
+				<div class="post-meta"><span>Jan 20, 2020</span></div>
+				<h1>Accurate Normal Reconstruction from Depth Buffer</h1>
+			</header>
+			<div class="content">
+				<p>Months ago I read a nice article <sup id="fnref:1"><a href="#fn:1" class="footnote-ref" role="doc-noteref">1</a></sup> about normal reconstruction by János Turánszki (@turanszkij), which reminded me that I had also tackled this problem before, but for a different purpose. While Turánszki reconstructed normal from depth buffer for better SSAO, I was aimed for rendering decals.</p>
+<p>In screen-space decals rendering, normal buffer is required to reject pixels projected onto near-perpendicular surfaces. But back then I was working on a forward pipeline, so no normal buffer was outputted. It seemed the best choice was to reconstruct it directly from depth buffer, as long as we could avoid introducing errors, which was not easy though. Fortunately, accurate normal reconstruction is impossible in theory but possible in practice, we eventually found a way inspired by Humus's SDAA idea <sup id="fnref:2"><a href="#fn:2" class="footnote-ref" role="doc-noteref">2</a></sup>, which is more accurate but also more expensive than Turánszki's method. However, it's worth the cost because decals are highly sensitive to the reconstruction errors. Following shows decals rendered in purple with different normal reconstruction strategies.</p>
+<figure>
+    <img src="/posts/images/normal-reconstruction-decals.png"/> 
+</figure>
+
+<ul>
+<li>Left: simply uses cross(ddx, ddy), note the artifacts in areas labeled with <strong>a</strong>, <strong>b</strong>, and <strong>c</strong>.</li>
+<li>Middle: the <em>improved approach</em> <sup id="fnref:1"><a href="#fn:1" class="footnote-ref" role="doc-noteref">1</a></sup>, the artifacts in <strong>a</strong> disappeared, but those in <strong>b</strong> and <strong>c</strong> still exist.</li>
+<li>Right: our <em>accurate method</em>, all artifacts are eliminated.</li>
+</ul>
+<hr>
+<p>To understand how those artifacts occur and disappear, I drawn a picture to illustrate the two typical types of discontinuities in depth buffer, in which the eye and arrow denote the camera position and direction respectively, and the blue dots denote the depth samples.</p>
+<figure>
+    <img src="/posts/images/depth-discontinuities.png" width="600px"/> 
+</figure>
+
+<p>In figure (1), Turánszki's method works very well. 3 taps are enough to eliminate errors: since $|d-c|$ is less than $|b-c|$, we can say that point $c$ is more likely on segment $de$ rather than segment $ab$. But this is not the case in figure (2): although $|b-c| &lt; |d-c|$, the point $c$ is apparently on segment $de$ instead of $ab$. This observation perfectly explains why the <em>improved approach</em> can only remove part of the artifacts in decal rendering.</p>
+<p>So we can conclude that 3 taps (on each direction) is inadequate. Humus's SDAA <sup id="fnref:2"><a href="#fn:2" class="footnote-ref" role="doc-noteref">2</a></sup> uses 5 sample taps along with a second depth layer to calculate edge locations, here we can use the same 5-tap pattern to determinate whether $c$ is on $ab$ or $de$. (Unlike SDAA, we don't have to calculate the accurate edge location, so the second-depth buffer is not needed.) Following describes the method step by step.</p>
+<figure>
+    <img src="/posts/images/depth-discontinuities-2.png" width="600px"/> 
+</figure>
+
+<ul>
+<li>Extrapolate segment $ab$ to $c$, get a new point $c_1$.</li>
+<li>Extrapolate segment $ed$ to $c$, get a new point $c_2$.</li>
+<li>If $|c_1-c| &lt; |c_2-c|$, report $c$ is on $ab$, otherwise report $c$ is on $de$.</li>
+</ul>
+<p>Note this method can locate $c$ correctly in both figure (1) and (2). Now we can apply this algorithm twice to get horizontal and vertical derivatives, then a cross product gives you the normal accurately. Here is the pseudo shader code.</p>
+<div class="highlight"><pre class="chroma"><code class="language-cpp" data-lang="cpp"><span class="c1">// Try reconstructing normal accurately from depth buffer.
+</span><span class="c1"></span><span class="c1">// input DepthBuffer: stores linearized depth in range (0, 1).
+</span><span class="c1"></span><span class="c1">// 5 taps on each direction: | z | x | * | y | w |, &#39;*&#39; denotes the center sample.
+</span><span class="c1"></span><span class="n">float3</span> <span class="nf">ReconstructNormal</span><span class="p">(</span><span class="n">texture2D</span> <span class="n">DepthBuffer</span><span class="p">,</span> <span class="n">float2</span> <span class="nl">spos</span><span class="p">:</span> <span class="n">SV_Position</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">float2</span> <span class="n">stc</span> <span class="o">=</span> <span class="n">spos</span> <span class="o">/</span> <span class="n">ScreenSize</span><span class="p">;</span>
+    <span class="kt">float</span> <span class="n">depth</span> <span class="o">=</span> <span class="n">DepthBuffer</span><span class="p">.</span><span class="n">Sample</span><span class="p">(</span><span class="n">DepthBuffer_Sampler</span><span class="p">,</span> <span class="n">stc</span><span class="p">)</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+
+    <span class="n">float4</span> <span class="n">H</span><span class="p">;</span>
+    <span class="n">H</span><span class="p">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">DepthBuffer</span><span class="p">.</span><span class="n">Sample</span><span class="p">(</span><span class="n">DepthBuffer_Sampler</span><span class="p">,</span> <span class="n">stc</span> <span class="o">-</span> <span class="n">float2</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">ScreenSize</span><span class="p">.</span><span class="n">x</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="p">)</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+    <span class="n">H</span><span class="p">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">DepthBuffer</span><span class="p">.</span><span class="n">Sample</span><span class="p">(</span><span class="n">DepthBuffer_Sampler</span><span class="p">,</span> <span class="n">stc</span> <span class="o">+</span> <span class="n">float2</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">ScreenSize</span><span class="p">.</span><span class="n">x</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="p">)</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+    <span class="n">H</span><span class="p">.</span><span class="n">z</span> <span class="o">=</span> <span class="n">DepthBuffer</span><span class="p">.</span><span class="n">Sample</span><span class="p">(</span><span class="n">DepthBuffer_Sampler</span><span class="p">,</span> <span class="n">stc</span> <span class="o">-</span> <span class="n">float2</span><span class="p">(</span><span class="mi">2</span> <span class="o">/</span> <span class="n">ScreenSize</span><span class="p">.</span><span class="n">x</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="p">)</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+    <span class="n">H</span><span class="p">.</span><span class="n">w</span> <span class="o">=</span> <span class="n">DepthBuffer</span><span class="p">.</span><span class="n">Sample</span><span class="p">(</span><span class="n">DepthBuffer_Sampler</span><span class="p">,</span> <span class="n">stc</span> <span class="o">+</span> <span class="n">float2</span><span class="p">(</span><span class="mi">2</span> <span class="o">/</span> <span class="n">ScreenSize</span><span class="p">.</span><span class="n">x</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="p">)</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+    <span class="n">float2</span> <span class="n">he</span> <span class="o">=</span> <span class="n">abs</span><span class="p">(</span><span class="n">H</span><span class="p">.</span><span class="n">xy</span> <span class="o">*</span> <span class="n">H</span><span class="p">.</span><span class="n">zw</span> <span class="o">*</span> <span class="n">rcp</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">H</span><span class="p">.</span><span class="n">zw</span> <span class="o">-</span> <span class="n">H</span><span class="p">.</span><span class="n">xy</span><span class="p">)</span> <span class="o">-</span> <span class="n">depth</span><span class="p">)</span><span class="p">;</span>
+    <span class="n">float3</span> <span class="n">hDeriv</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">he</span><span class="p">.</span><span class="n">x</span> <span class="o">&gt;</span> <span class="n">he</span><span class="p">.</span><span class="n">y</span><span class="p">)</span>
+        <span class="n">hDeriv</span> <span class="o">=</span> <span class="n">Calculate</span> <span class="n">horizontal</span> <span class="n">derivative</span> <span class="n">of</span> <span class="n">world</span> <span class="n">position</span> <span class="n">from</span> <span class="n">taps</span> <span class="o">|</span> <span class="n">z</span> <span class="o">|</span> <span class="n">x</span> <span class="o">|</span>
+    <span class="k">else</span>
+        <span class="n">hDeriv</span> <span class="o">=</span> <span class="n">Calculate</span> <span class="n">horizontal</span> <span class="n">derivative</span> <span class="n">of</span> <span class="n">world</span> <span class="n">position</span> <span class="n">from</span> <span class="n">taps</span> <span class="o">|</span> <span class="n">y</span> <span class="o">|</span> <span class="n">w</span> <span class="o">|</span>
+
+    <span class="n">float4</span> <span class="n">V</span><span class="p">;</span>
+    <span class="n">V</span><span class="p">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">DepthBuffer</span><span class="p">.</span><span class="n">Sample</span><span class="p">(</span><span class="n">DepthBuffer_Sampler</span><span class="p">,</span> <span class="n">stc</span> <span class="o">-</span> <span class="n">float2</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">ScreenSize</span><span class="p">.</span><span class="n">y</span><span class="p">)</span><span class="p">)</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+    <span class="n">V</span><span class="p">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">DepthBuffer</span><span class="p">.</span><span class="n">Sample</span><span class="p">(</span><span class="n">DepthBuffer_Sampler</span><span class="p">,</span> <span class="n">stc</span> <span class="o">+</span> <span class="n">float2</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">ScreenSize</span><span class="p">.</span><span class="n">y</span><span class="p">)</span><span class="p">)</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+    <span class="n">V</span><span class="p">.</span><span class="n">z</span> <span class="o">=</span> <span class="n">DepthBuffer</span><span class="p">.</span><span class="n">Sample</span><span class="p">(</span><span class="n">DepthBuffer_Sampler</span><span class="p">,</span> <span class="n">stc</span> <span class="o">-</span> <span class="n">float2</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span> <span class="o">/</span> <span class="n">ScreenSize</span><span class="p">.</span><span class="n">y</span><span class="p">)</span><span class="p">)</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+    <span class="n">V</span><span class="p">.</span><span class="n">w</span> <span class="o">=</span> <span class="n">DepthBuffer</span><span class="p">.</span><span class="n">Sample</span><span class="p">(</span><span class="n">DepthBuffer_Sampler</span><span class="p">,</span> <span class="n">stc</span> <span class="o">+</span> <span class="n">float2</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span> <span class="o">/</span> <span class="n">ScreenSize</span><span class="p">.</span><span class="n">y</span><span class="p">)</span><span class="p">)</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+    <span class="n">float2</span> <span class="n">ve</span> <span class="o">=</span> <span class="n">abs</span><span class="p">(</span><span class="n">V</span><span class="p">.</span><span class="n">xy</span> <span class="o">*</span> <span class="n">V</span><span class="p">.</span><span class="n">zw</span> <span class="o">*</span> <span class="n">rcp</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">V</span><span class="p">.</span><span class="n">zw</span> <span class="o">-</span> <span class="n">V</span><span class="p">.</span><span class="n">xy</span><span class="p">)</span> <span class="o">-</span> <span class="n">depth</span><span class="p">)</span><span class="p">;</span>
+    <span class="n">float3</span> <span class="n">vDeriv</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">ve</span><span class="p">.</span><span class="n">x</span> <span class="o">&gt;</span> <span class="n">ve</span><span class="p">.</span><span class="n">y</span><span class="p">)</span>
+        <span class="n">vDeriv</span> <span class="o">=</span> <span class="n">Calculate</span> <span class="n">vertical</span> <span class="n">derivative</span> <span class="n">of</span> <span class="n">world</span> <span class="n">position</span> <span class="n">from</span> <span class="n">taps</span> <span class="o">|</span> <span class="n">z</span> <span class="o">|</span> <span class="n">x</span> <span class="o">|</span>
+    <span class="k">else</span>
+        <span class="n">vDeriv</span> <span class="o">=</span> <span class="n">Calculate</span> <span class="n">vertical</span> <span class="n">derivative</span> <span class="n">of</span> <span class="n">world</span> <span class="n">position</span> <span class="n">from</span> <span class="n">taps</span> <span class="o">|</span> <span class="n">y</span> <span class="o">|</span> <span class="n">w</span> <span class="o">|</span>
+
+    <span class="k">return</span> <span class="n">normalize</span><span class="p">(</span><span class="n">cross</span><span class="p">(</span><span class="n">hDeriv</span><span class="p">,</span> <span class="n">vDeriv</span><span class="p">)</span><span class="p">)</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div><p>At last I need to say that this <em>accurate method</em> may still fail on tiny triangles, but it's rarely noticeable. We've used this technique in decal rendering for years, our artists never complain about any artifact. Hope you find it useful.</p>
+<section class="footnotes" role="doc-endnotes">
+<hr>
+<ol>
+<li id="fn:1" role="doc-endnote">
+<p>János Turánszki, &ldquo;Improved normal reconstruction from depth&rdquo;. <a href="https://wickedengine.net/2019/09/22/improved-normal-reconstruction-from-depth">https://wickedengine.net/2019/09/22/improved-normal-reconstruction-from-depth</a>. <a href="#fnref:1" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+</li>
+<li id="fn:2" role="doc-endnote">
+<p>Emil Persson. “Second-Depth Antialiasing”. In GPU Pro 4, A K Peters, 2013, pp. 201–212. <a href="#fnref:2" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+</li>
+</ol>
+</section>
+
+			</div>
+			<hr class="post-end">
+			<footer class="post-info">
+				<p>
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg><span class="tag"><a href="https://atyuwen.github.io/tags/graphics">Graphics</a></span>
+				</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>780 Words</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2020-01-20 09:58 &#43;0800</p>
+			</footer>
+		</article>
+		<div class="post-nav thin">
+			<a class="prev-post" href="https://atyuwen.github.io/posts/antialiased-line/">
+				<span class="post-nav-label">Older&nbsp;<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span><br><span>Draw Anti-aliased Lines with Geometry Shader</span>
+			</a>
+		</div>
+		<div id="comments" class="thin">
+<div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "cppminor" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</div>
+	</main>
+
+	<script>
+		MathJax = {
+			tex: {inlineMath: [['$', '$'], ['\\(', '\\)']]},
+			svg: {fontCache: 'global'}
+	};
+	</script>
+	<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+	
+	<footer id="site-footer" class="section-inner thin animated fadeIn faster">
+		<p>&copy; 2020 <a href="https://atyuwen.github.io">atyuwen</a> &#183; <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC BY-NC 4.0</a></p>
+		<p>
+			Made with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> &#183; Theme <a href="https://github.com/Track3/hermit" target="_blank" rel="noopener">Hermit</a> &#183; <a href="https://atyuwen.github.io/posts/index.xml" target="_blank" title="rss"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rss"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg></a>
+		</p>
+	</footer>
+
+
+
+	<script src="https://atyuwen.github.io/js/bundle.min.4a9a0ac3d2217822c7865b4161e6c2a71de1d70492264337755427898dd718f6.js" integrity="sha256-SpoKw9IheCLHhltBYebCpx3h1wSSJkM3dVQniY3XGPY=" crossorigin="anonymous"></script>
+	
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-155205105-1', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+
+</body>
+
+</html>
