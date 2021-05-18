@@ -6,8 +6,149 @@
 		<generator>Hugo -- gohugo.io</generator>
 		<language>en-us</language>
 		<copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
-		<lastBuildDate>Mon, 20 Jan 2020 09:58:17 +0800</lastBuildDate>
+		<lastBuildDate>Mon, 17 May 2021 17:42:19 +0800</lastBuildDate>
 		<atom:link href="https://atyuwen.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
+		
+		<item>
+			<title>Fast Divergence-Free Noise Generation in Shaders</title>
+			<link>https://atyuwen.github.io/posts/bitangent-noise/</link>
+			<pubDate>Mon, 17 May 2021 17:42:19 +0800</pubDate>
+			
+			<guid>https://atyuwen.github.io/posts/bitangent-noise/</guid>
+			<description>This article describes a method called &amp;ldquo;Bitangent Noise&amp;rdquo; which can generate divergence-free noise efficiently. The implementation is a single shader without any other dependencies, and both HLSL and GLSL codes are provided for your convenience. The following image shows a particle system that is updated using bitangent noise.
+Bitangent Noise Divergence-free noise is an ingenious technique that is extremely suitable for driving particles to move like real fluid motion. The most widely used divergence-free noise generator is called Curl Noise 1, I first knew it from smash&#39;s great article 2 about the making of the blunderbuss demo, in which the fluid effect impressed me deeply.</description>
+			<content type="html"><![CDATA[<p>This article describes a method called &ldquo;Bitangent Noise&rdquo; which can generate divergence-free noise efficiently. The <a href="https://github.com/atyuwen/bitangent_noise/">implementation</a> is a single shader without any other dependencies, and both HLSL and GLSL codes are provided for your convenience. The following image shows a particle system that is updated using bitangent noise.</p>
+<p><img src="https://github.com/atyuwen/bitangent_noise/blob/main/image.png?raw=true" alt="image"></p>
+<h2 id="bitangent-noise">Bitangent Noise</h2>
+<p>Divergence-free noise is an ingenious technique that is extremely suitable for driving particles to move like real fluid motion. The most widely used divergence-free noise generator is called <strong>Curl Noise</strong> <sup id="fnref:1"><a href="#fn:1" class="footnote-ref" role="doc-noteref">1</a></sup>, I first knew it from smash's great article <sup id="fnref:2"><a href="#fn:2" class="footnote-ref" role="doc-noteref">2</a></sup> about the making of the <a href="https://www.youtube.com/watch?v=VCpYH8yDK8g">blunderbuss</a> demo, in which the fluid effect impressed me deeply. Later I also tried to reproduce that effect <a href="https://github.com/atyuwen/efflux">(github project)</a>, though the result is not as good as smash's masterpiece.</p>
+<p>While mathematically simple and elegant, curl noise is not very easy to generate. In practice we usually need 4d noise (3d position + time), which makes things worse. One day when I was looking over some vector calculus materials and expecting some clues to optimize curl noise, I occasionally found some identities that are particularly interesting:</p>
+<p>$$ \nabla \cdot (A \times B) = B \cdot (\nabla \times A) - A \cdot (\nabla \times B) $$</p>
+<p>$$ \nabla \times (\nabla \phi) = 0 $$</p>
+<p>From above two equations we have:</p>
+<p>$$ \nabla \cdot (\nabla \phi \times \nabla \psi) = 0 $$</p>
+<p>That means the divergence of the cross product of two gradient fields is always zero. Now we have another method to generate divergence-free noise:</p>
+<ul>
+<li>Generate a random scaler field $\phi$ and calculate its gradient $G$.</li>
+<li>Generate a random scaler field $\psi$ and calculate its gradient $F$.</li>
+<li>return the cross product $G \times F$.</li>
+</ul>
+<p>Compare to curl noise which needs 3 gradients, this method is computationally cheaper because it only needs calculating 2 gradients. At first I thought this method was new and named it <strong>Bitangent Noise</strong>, since it's tangent to both the level surface of field $\phi$ and field $\psi$. But later I found it was already invented by Ivan DeWolf in 2005 <sup id="fnref:3"><a href="#fn:3" class="footnote-ref" role="doc-noteref">3</a></sup>. (I'm wondering why it is so less popular than curl noise.) Since Ivan DeWolf didn't give it a name, I'll stick to this punny name &ldquo;Bi-tangent Noise&rdquo;.</p>
+<h2 id="implementation">Implementation</h2>
+<p>Okay, now we have bitangent noise to replace curl noise, the remaining task is to implement it efficiently. Since we really don't want to introduce any external dependencies (e.g. LUT Textures), Ian McEwan &amp; stegu's pure ALU-based simplex noise <a href="https://github.com/stegu/webgl-noise/">implementation</a> <sup id="fnref:4"><a href="#fn:4" class="footnote-ref" role="doc-noteref">4</a></sup> seems to be a good start. Using simplex noise with analytic derivatives, we can implement bitangent noise straightforwardly like following:</p>
+<div class="highlight"><pre class="chroma"><code class="language-cpp" data-lang="cpp"><span class="n">float3</span> <span class="nf">BitangentNoise3D</span><span class="p">(</span><span class="n">float3</span> <span class="n">p</span><span class="p">)</span>
+<span class="p">{</span>
+	<span class="n">float3</span> <span class="n">dA</span> <span class="o">=</span> <span class="n">SimplexNoise3DGrad</span><span class="p">(</span><span class="n">p</span><span class="p">)</span><span class="p">;</span>
+	<span class="n">float3</span> <span class="n">dB</span> <span class="o">=</span> <span class="n">SimplexNoise3DGrad</span><span class="p">(</span><span class="n">p</span> <span class="o">+</span> <span class="n">float3</span><span class="p">(</span><span class="mf">31.416</span><span class="p">,</span> <span class="o">-</span><span class="mf">47.853</span><span class="p">,</span> <span class="mf">12.679</span><span class="p">)</span><span class="p">)</span><span class="p">;</span>
+	<span class="k">return</span> <span class="n">cross</span><span class="p">(</span><span class="n">dA</span><span class="p">,</span> <span class="n">dB</span><span class="p">)</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="n">float3</span> <span class="nf">BitangentNoise4D</span><span class="p">(</span><span class="n">float4</span> <span class="n">p</span><span class="p">)</span>
+<span class="p">{</span>
+	<span class="n">float3</span> <span class="n">dA</span> <span class="o">=</span> <span class="n">SimplexNoise4DGrad</span><span class="p">(</span><span class="n">p</span><span class="p">)</span><span class="p">.</span><span class="n">xyz</span><span class="p">;</span>
+	<span class="n">float3</span> <span class="n">dB</span> <span class="o">=</span> <span class="n">SimplexNoise4DGrad</span><span class="p">(</span><span class="n">p</span> <span class="o">+</span> <span class="n">float4</span><span class="p">(</span><span class="mf">31.416</span><span class="p">,</span> <span class="o">-</span><span class="mf">47.853</span><span class="p">,</span> <span class="mf">12.679</span><span class="p">,</span> <span class="mf">113.408</span><span class="p">)</span><span class="p">)</span><span class="p">.</span><span class="n">xyz</span><span class="p">;</span>
+	<span class="k">return</span> <span class="n">cross</span><span class="p">(</span><span class="n">dA</span><span class="p">,</span> <span class="n">dB</span><span class="p">)</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div><p>From above code we can see clearly the cost of bitangent noise is basically twice the cost of simplex noise. For 4d case, there are some trickeries (<a href="https://github.com/atyuwen/bitangent_noise/blob/main/Develop/BitangentNoise_ref.hlsl#L233">e</a>.<a href="https://github.com/atyuwen/bitangent_noise/blob/main/Develop/BitangentNoise_ref.hlsl#L239">g</a>.) to optimize it further, but they all have the drawback of losing some randomness. Can we do it better without sacrificing quality?</p>
+<p>Notice that to get 2 gradients, we simply called <code>SimplexNoiseNDGrad</code> twice with different inputs, which prevent sharing of all the intermediate results which are highly dependent on the inputs. What if we just use one <code>SimplexNoiseNDGrad</code> routine and compute 2 gradients simultaneously? And indeed we can do that by providing two different sets of gradients attached to simplex corners. Here comes the last problem: how to pick two random gradients for each simplex corner? Fortunately we have PCGs (Permuted Congruential Generators) <sup id="fnref:5"><a href="#fn:5" class="footnote-ref" role="doc-noteref">5</a></sup> <sup id="fnref:6"><a href="#fn:6" class="footnote-ref" role="doc-noteref">6</a></sup>:</p>
+<div class="highlight"><pre class="chroma"><code class="language-cpp" data-lang="cpp"><span class="c1">// Permuted congruential generator (only top 16 bits are well shuffled).
+</span><span class="c1"></span><span class="n">uint2</span> <span class="nf">pcg3d16</span><span class="p">(</span><span class="n">uint3</span> <span class="n">p</span><span class="p">)</span>
+<span class="p">{</span>
+	<span class="n">uint3</span> <span class="n">v</span> <span class="o">=</span> <span class="n">p</span> <span class="o">*</span> <span class="mi">1664525u</span> <span class="o">+</span> <span class="mi">1013904223u</span><span class="p">;</span>
+	<span class="n">v</span><span class="p">.</span><span class="n">x</span> <span class="o">+</span><span class="o">=</span> <span class="n">v</span><span class="p">.</span><span class="n">y</span><span class="o">*</span><span class="n">v</span><span class="p">.</span><span class="n">z</span><span class="p">;</span> <span class="n">v</span><span class="p">.</span><span class="n">y</span> <span class="o">+</span><span class="o">=</span> <span class="n">v</span><span class="p">.</span><span class="n">z</span><span class="o">*</span><span class="n">v</span><span class="p">.</span><span class="n">x</span><span class="p">;</span> <span class="n">v</span><span class="p">.</span><span class="n">z</span> <span class="o">+</span><span class="o">=</span> <span class="n">v</span><span class="p">.</span><span class="n">x</span><span class="o">*</span><span class="n">v</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+	<span class="n">v</span><span class="p">.</span><span class="n">x</span> <span class="o">+</span><span class="o">=</span> <span class="n">v</span><span class="p">.</span><span class="n">y</span><span class="o">*</span><span class="n">v</span><span class="p">.</span><span class="n">z</span><span class="p">;</span> <span class="n">v</span><span class="p">.</span><span class="n">y</span> <span class="o">+</span><span class="o">=</span> <span class="n">v</span><span class="p">.</span><span class="n">z</span><span class="o">*</span><span class="n">v</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+	<span class="k">return</span> <span class="n">v</span><span class="p">.</span><span class="n">xy</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="n">uint2</span> <span class="nf">pcg4d16</span><span class="p">(</span><span class="n">uint4</span> <span class="n">p</span><span class="p">)</span>
+<span class="p">{</span>
+	<span class="n">uint4</span> <span class="n">v</span> <span class="o">=</span> <span class="n">p</span> <span class="o">*</span> <span class="mi">1664525u</span> <span class="o">+</span> <span class="mi">1013904223u</span><span class="p">;</span>
+	<span class="n">v</span><span class="p">.</span><span class="n">x</span> <span class="o">+</span><span class="o">=</span> <span class="n">v</span><span class="p">.</span><span class="n">y</span><span class="o">*</span><span class="n">v</span><span class="p">.</span><span class="n">w</span><span class="p">;</span> <span class="n">v</span><span class="p">.</span><span class="n">y</span> <span class="o">+</span><span class="o">=</span> <span class="n">v</span><span class="p">.</span><span class="n">z</span><span class="o">*</span><span class="n">v</span><span class="p">.</span><span class="n">x</span><span class="p">;</span> <span class="n">v</span><span class="p">.</span><span class="n">z</span> <span class="o">+</span><span class="o">=</span> <span class="n">v</span><span class="p">.</span><span class="n">x</span><span class="o">*</span><span class="n">v</span><span class="p">.</span><span class="n">y</span><span class="p">;</span> <span class="n">v</span><span class="p">.</span><span class="n">w</span> <span class="o">+</span><span class="o">=</span> <span class="n">v</span><span class="p">.</span><span class="n">y</span><span class="o">*</span><span class="n">v</span><span class="p">.</span><span class="n">z</span><span class="p">;</span>
+	<span class="n">v</span><span class="p">.</span><span class="n">x</span> <span class="o">+</span><span class="o">=</span> <span class="n">v</span><span class="p">.</span><span class="n">y</span><span class="o">*</span><span class="n">v</span><span class="p">.</span><span class="n">w</span><span class="p">;</span> <span class="n">v</span><span class="p">.</span><span class="n">y</span> <span class="o">+</span><span class="o">=</span> <span class="n">v</span><span class="p">.</span><span class="n">z</span><span class="o">*</span><span class="n">v</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+	<span class="k">return</span> <span class="n">v</span><span class="p">.</span><span class="n">xy</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div><p>Using PCG we can generate 2 independent random values from the skewed coordinate of each simplex corner, then we can easily pick two random gradients according to these 2 hash values. By feeding those gradients to the standard simplex noise procedure we can generate 2 noise derivatives at one time with very few extra computations, which makes our bitangent noise generator just <strong>a little more expensive</strong> than simplex noise (about 30%, see the performance data below).</p>
+<h2 id="performance">Performance</h2>
+<p>These performance data are measured on a Nvidia GTX 1060 card, where each noise function is executed 1280 * 720 * 10 times.</p>
+<table>
+<thead>
+<tr>
+<th>Noise Function</th>
+<th>Cost</th>
+<th>Desc</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>snoise3d</td>
+<td>1530 μs</td>
+<td><a href="https://github.com/stegu/webgl-noise/blob/master/src/noise3D.glsl">stegu's 3d simplex nosie</a></td>
+</tr>
+<tr>
+<td><strong>SimplexNoise3D</strong></td>
+<td><strong>1153 μs</strong></td>
+<td><a href="https://github.com/atyuwen/bitangent_noise/blob/main/Develop/SimplexNoise.hlsl#L41">optimized 3d simplex noise</a></td>
+</tr>
+<tr>
+<td>snoise4d</td>
+<td>2578 μs</td>
+<td><a href="https://github.com/stegu/webgl-noise/blob/master/src/noise4D.glsl">stegu's 4d simplex nosie</a></td>
+</tr>
+<tr>
+<td><strong>SimplexNoise4D</strong></td>
+<td><strong>1798 μs</strong></td>
+<td><a href="https://github.com/atyuwen/bitangent_noise/blob/main/Develop/SimplexNoise.hlsl#L84">optimized 4d simplex noise</a></td>
+</tr>
+<tr>
+<td>BitangentNoise3D_ref</td>
+<td>2991 μs</td>
+<td><a href="https://github.com/atyuwen/bitangent_noise/blob/main/Develop/BitangentNoise_ref.hlsl#L219">3d bitangent noise, reference version </a></td>
+</tr>
+<tr>
+<td><strong>BitangentNoise3D</strong></td>
+<td><strong>1534 μs</strong></td>
+<td><a href="https://github.com/atyuwen/bitangent_noise/blob/main/BitangentNoise.hlsl#L41">optimized 3d bitangent noise</a></td>
+</tr>
+<tr>
+<td>BitangentNoise4D_ref</td>
+<td>4365 μs</td>
+<td><a href="https://github.com/atyuwen/bitangent_noise/blob/main/Develop/BitangentNoise_ref.hlsl#L227">4d bitangent noise, reference version</a></td>
+</tr>
+<tr>
+<td>BitangentNoise4DFast_ref</td>
+<td>3152 μs</td>
+<td><a href="https://github.com/atyuwen/bitangent_noise/blob/main/Develop/BitangentNoise_ref.hlsl#L239">4d bitangent noise, low quality</a></td>
+</tr>
+<tr>
+<td><strong>BitangentNoise4D</strong></td>
+<td><strong>2413 μs</strong></td>
+<td><a href="https://github.com/atyuwen/bitangent_noise/blob/main/BitangentNoise.hlsl#L97">optimized 4d bitangent noise</a></td>
+</tr>
+</tbody>
+</table>
+<section class="footnotes" role="doc-endnotes">
+<hr>
+<ol>
+<li id="fn:1" role="doc-endnote">
+<p>Bridson, R., Hourihan, J., Nordenstam, M. 2007. &ldquo;Curl-Noise for Procedural Fluid Flow&rdquo;. ACM Trans. Graph. 26, 3, Article 46 (July 2007), <a href="#fnref:1" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+</li>
+<li id="fn:2" role="doc-endnote">
+<p>Matt &ldquo;Smash&rdquo; Swoboda, &ldquo;A thoroughly modern particle system&rdquo;. <a href="https://directtovideo.wordpress.com/2009/10/06/a-thoroughly-modern-particle-system/">https://directtovideo.wordpress.com/2009/10/06/a-thoroughly-modern-particle-system/</a> <a href="#fnref:2" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+</li>
+<li id="fn:3" role="doc-endnote">
+<p>Ivan DeWolf, &ldquo;Divergence-Free Noise&rdquo;. <a href="https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.93.7627&amp;rep=rep1&amp;type=pdf">https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.93.7627&amp;rep=rep1&amp;type=pdf</a> <a href="#fnref:3" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+</li>
+<li id="fn:4" role="doc-endnote">
+<p>McEwan, Ian, David Sheets, Mark Richardson, and Stefan Gustavson. &ldquo;Efficient computational noise in GLSL.&rdquo; Journal of Graphics Tools 16, no. 2 (2012): 85-94. <a href="#fnref:4" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+</li>
+<li id="fn:5" role="doc-endnote">
+<p>Mark Jarzynski and Marc Olano, &ldquo;Hash Functions for GPU Rendering&rdquo;, Journal of Computer Graphics Techniques (JCGT), vol. 9, no. 3, 21-38, 2020 <a href="#fnref:5" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+</li>
+<li id="fn:6" role="doc-endnote">
+<p>Epic Games, UnrealEngine/Random.ush. <a href="https://github.com/EpicGames/UnrealEngine">https://github.com/EpicGames/UnrealEngine</a> <a href="#fnref:6" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+</li>
+</ol>
+</section>
+]]></content>
+		</item>
 		
 		<item>
 			<title>Accurate Normal Reconstruction from Depth Buffer</title>
