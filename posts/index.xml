@@ -221,7 +221,8 @@ In screen-space decals rendering, normal buffer is required to reject pixels pro
 
     <span class="k">return</span> <span class="n">normalize</span><span class="p">(</span><span class="n">cross</span><span class="p">(</span><span class="n">hDeriv</span><span class="p">,</span> <span class="n">vDeriv</span><span class="p">)</span><span class="p">)</span><span class="p">;</span>
 <span class="p">}</span>
-</code></pre></div><p>At last I need to say that this <em>accurate method</em> may still fail on tiny triangles, but it's rarely noticeable. We've used this technique in decal rendering for years, our artists never complain about any artifact. Hope you find it useful.</p>
+</code></pre></div><p><em>Feb 16 Update</em>: The <code>he</code> and <code>ve</code> in above code are so calculated because we need to do perspective correct interpolation here, i.e, interpolating on 1/depth instead of depth.</p>
+<p>At last I need to say that this <em>accurate method</em> may still fail on tiny triangles, but it's rarely noticeable. We've used this technique in decal rendering for years, our artists never complain about any artifact. Hope you find it useful.</p>
 <section class="footnotes" role="doc-endnotes">
 <hr>
 <ol>
