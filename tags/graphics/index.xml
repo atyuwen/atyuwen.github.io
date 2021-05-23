@@ -18,8 +18,8 @@
       <pubDate>Mon, 17 May 2021 17:42:19 +0800</pubDate>
       
       <guid>https://atyuwen.github.io/posts/bitangent-noise/</guid>
-      <description>This article describes a method called &amp;ldquo;Bitangent Noise&amp;rdquo; which can generate divergence-free noise efficiently. The implementation is a single shader without any other dependencies, and both HLSL and GLSL codes are provided for your convenience. The following image shows a particle system that is updated using bitangent noise.
-Bitangent Noise Divergence-free noise is an ingenious technique that is extremely suitable for driving particles to move like real fluid motion. The most widely used divergence-free noise generator is called Curl Noise 1, I first knew it from smash&#39;s great article 2 about the making of the blunderbuss demo, in which the fluid effect impressed me deeply.</description>
+      <description>This article describes a method called &amp;ldquo;Bitangent Noise&amp;rdquo; which can generate divergence-free noise efficiently. The implementation is a single shader without any other dependencies, and both HLSL and GLSL codes are provided for your convenience. The following image shows a particle system that is updated using bitangent noise, and here is a shadertoy example shows how to use bitangent noise to make a smoke ball.
+Bitangent Noise Divergence-free noise is an ingenious technique that is extremely suitable for driving particles to move like real fluid motion.</description>
     </item>
     
     <item>
