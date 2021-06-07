@@ -8,17 +8,17 @@
 	<meta name="theme-color" content="#a15a7e">
 	<meta name="msapplication-TileColor" content="#a15a7e">
 <meta itemprop="name" content="Fast Divergence-Free Noise Generation in Shaders">
-<meta itemprop="description" content="This article describes a method called &ldquo;Bitangent Noise&rdquo; which can generate divergence-free noise efficiently. The implementation is a single shader without any other dependencies, and both HLSL and GLSL codes are provided for your convenience. The following image shows a particle system that is updated using bitangent noise, and here is a shadertoy example shows how to use bitangent noise to make a smoke ball.
+<meta itemprop="description" content="This article describes a method called &ldquo;Bitangent Noise&rdquo; which can generate divergence-free noise efficiently. The implementation is a single shader without any other dependencies, and both HLSL and GLSL codes are provided for your convenience. The following image (video) shows a particle system that is updated using bitangent noise, and here is a shadertoy example shows how to use bitangent noise to make a smoke ball.
 
 Bitangent Noise Divergence-free noise is an ingenious technique that is extremely suitable for driving particles to move like real fluid motion.">
 <meta itemprop="datePublished" content="2021-05-17T17:42:19&#43;08:00" />
 <meta itemprop="dateModified" content="2021-05-17T17:42:19&#43;08:00" />
-<meta itemprop="wordCount" content="1029">
+<meta itemprop="wordCount" content="1030">
 
 
 
 <meta itemprop="keywords" content="Graphics," /><meta property="og:title" content="Fast Divergence-Free Noise Generation in Shaders" />
-<meta property="og:description" content="This article describes a method called &ldquo;Bitangent Noise&rdquo; which can generate divergence-free noise efficiently. The implementation is a single shader without any other dependencies, and both HLSL and GLSL codes are provided for your convenience. The following image shows a particle system that is updated using bitangent noise, and here is a shadertoy example shows how to use bitangent noise to make a smoke ball.
+<meta property="og:description" content="This article describes a method called &ldquo;Bitangent Noise&rdquo; which can generate divergence-free noise efficiently. The implementation is a single shader without any other dependencies, and both HLSL and GLSL codes are provided for your convenience. The following image (video) shows a particle system that is updated using bitangent noise, and here is a shadertoy example shows how to use bitangent noise to make a smoke ball.
 
 Bitangent Noise Divergence-free noise is an ingenious technique that is extremely suitable for driving particles to move like real fluid motion." />
 <meta property="og:type" content="article" />
@@ -27,7 +27,7 @@ Bitangent Noise Divergence-free noise is an ingenious technique that is extremel
 <meta property="article:modified_time" content="2021-05-17T17:42:19+08:00" />
 <meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="Fast Divergence-Free Noise Generation in Shaders"/>
-<meta name="twitter:description" content="This article describes a method called &ldquo;Bitangent Noise&rdquo; which can generate divergence-free noise efficiently. The implementation is a single shader without any other dependencies, and both HLSL and GLSL codes are provided for your convenience. The following image shows a particle system that is updated using bitangent noise, and here is a shadertoy example shows how to use bitangent noise to make a smoke ball.
+<meta name="twitter:description" content="This article describes a method called &ldquo;Bitangent Noise&rdquo; which can generate divergence-free noise efficiently. The implementation is a single shader without any other dependencies, and both HLSL and GLSL codes are provided for your convenience. The following image (video) shows a particle system that is updated using bitangent noise, and here is a shadertoy example shows how to use bitangent noise to make a smoke ball.
 
 Bitangent Noise Divergence-free noise is an ingenious technique that is extremely suitable for driving particles to move like real fluid motion."/>
 
@@ -78,12 +78,12 @@ Bitangent Noise Divergence-free noise is an ingenious technique that is extremel
 				<h1>Fast Divergence-Free Noise Generation in Shaders</h1>
 			</header>
 			<div class="content">
-				<p>This article describes a method called &ldquo;Bitangent Noise&rdquo; which can generate divergence-free noise efficiently. The <a href="https://github.com/atyuwen/bitangent_noise/">implementation</a> is a single shader without any other dependencies, and both HLSL and GLSL codes are provided for your convenience. The following image shows a particle system that is updated using bitangent noise, and here is a <a href="https://www.shadertoy.com/view/ftl3zN">shadertoy example</a> shows how to use bitangent noise to make a smoke ball.</p>
+				<p>This article describes a method called &ldquo;Bitangent Noise&rdquo; which can generate divergence-free noise efficiently. The <a href="https://github.com/atyuwen/bitangent_noise/">implementation</a> is a single shader without any other dependencies, and both HLSL and GLSL codes are provided for your convenience. The following image (<a href="https://youtu.be/KbdQgGWJ_tA">video</a>) shows a particle system that is updated using bitangent noise, and here is a <a href="https://www.shadertoy.com/view/ftl3zN">shadertoy example</a> shows how to use bitangent noise to make a smoke ball.</p>
 <p><a href="https://youtu.be/KbdQgGWJ_tA"><img src="https://github.com/atyuwen/bitangent_noise/blob/main/image.png?raw=true" alt="image"></a></p>
 <h2 id="bitangent-noise">Bitangent Noise<a href="#bitangent-noise" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
 <p>Divergence-free noise is an ingenious technique that is extremely suitable for driving particles to move like real fluid motion. The most widely used divergence-free noise generator is called <strong>Curl Noise</strong> <sup id="fnref:1"><a href="#fn:1" class="footnote-ref" role="doc-noteref">1</a></sup>, I first knew it from smash's great article <sup id="fnref:2"><a href="#fn:2" class="footnote-ref" role="doc-noteref">2</a></sup> about the making of the <a href="https://www.youtube.com/watch?v=VCpYH8yDK8g">blunderbuss</a> demo, in which the fluid effect impressed me deeply. Later I also tried to reproduce that effect <a href="https://github.com/atyuwen/efflux">(github project)</a>, though the result is not as good as smash's masterpiece.</p>
 <p>If you don't know the curl noise, its core idea is based on this identity: $\nabla \cdot \nabla \times \equiv 0$, i.e. <strong>the divergence of a curl is zero</strong>. So to get a divergence-free vector field, you can firstly generate 3 random scaler fields, then calculate the gradient of each, and finally compute the curl from those gradients, now the result is divergence-free by construction.</p>
-<p>While mathematically simple and elegant, curl noise is not very easy to generate. In practice we usually need 4d noise (3d position + time), which makes things worse, because the higher the dimension, the more expensive to calculate. One day when I was looking over some vector calculus materials and expecting some clues to optimize my noise generator, I occasionally found some identities that are particularly interesting:</p>
+<p>While mathematically simple and elegant, curl noise is not very cheap to generate. In practice we usually need 4d noise (3d position + time), which makes things worse, because the higher the dimension, the more expensive to calculate. One day when I was looking over some vector calculus materials and expecting some clues to optimize my noise generator, I occasionally found some identities that are particularly interesting:</p>
 <p>$$ \nabla \cdot (A \times B) = B \cdot (\nabla \times A) - A \cdot (\nabla \times B) $$</p>
 <p>$$ \nabla \times (\nabla \phi) = 0 $$</p>
 <p>From above two equations we have:</p>
@@ -216,7 +216,7 @@ Bitangent Noise Divergence-free noise is an ingenious technique that is extremel
 				<p>
 					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg><span class="tag"><a href="https://atyuwen.github.io/tags/graphics">Graphics</a></span>
 				</p>
-				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>1029 Words</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>1030 Words</p>
 				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2021-05-17 17:42 &#43;0800</p>
 			</footer>
 		</article>
