@@ -7,10 +7,15 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
-    <lastBuildDate>Mon, 17 May 2021 17:42:19 +0800</lastBuildDate>
-    
-	<atom:link href="https://atyuwen.github.io/index.xml" rel="self" type="application/rss+xml" />
-    
+    <lastBuildDate>Wed, 25 Aug 2021 14:12:29 +0800</lastBuildDate><atom:link href="https://atyuwen.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Optimizing AMD FSR for Mobiles</title>
+      <link>https://atyuwen.github.io/posts/optimizing-fsr/</link>
+      <pubDate>Wed, 25 Aug 2021 14:12:29 +0800</pubDate>
+      
+      <guid>https://atyuwen.github.io/posts/optimizing-fsr/</guid>
+      <description>Recently AMD released its super resolution algorithm named FidelityFX Super Resolution (FSR). Compare to its competitor DLSS that can only be enabled on RTX capable cards, FSR doesn&amp;rsquo;t require any particular hardware support, which makes it very attractive for cross-platform games. However, although FSR is highly optimized and runs efficiently on PCs, it is overweight on Mobiles. This article describes how we optimize FSR greatly on an iPhone 12 without sacrificing too much image quality.</description>
+    </item>
     
     <item>
       <title>Fast Divergence-Free Noise Generation in Shaders</title>
@@ -39,7 +44,7 @@ In screen-space decals rendering, normal buffer is required to reject pixels pro
       <pubDate>Wed, 01 Jan 2020 09:20:55 +0800</pubDate>
       
       <guid>https://atyuwen.github.io/posts/antialiased-line/</guid>
-      <description>For engine programmers, there are many cases you have to draw lines on screen, e.g. rendering a grid on the ground, drawing bounding boxes and other helper objects. Usually it&#39;s not a problem if you are very used to the jaggies, but recently I can&#39;t stand it anymore, my eyes complain to me that they want anti-aliased lines. After a quick search on google, it surprises me that there is no existing handy code piece can meet my needs.</description>
+      <description>For engine programmers, there are many cases you have to draw lines on screen, e.g. rendering a grid on the ground, drawing bounding boxes and other helper objects. Usually it&amp;rsquo;s not a problem if you are very used to the jaggies, but recently I can&amp;rsquo;t stand it anymore, my eyes complain to me that they want anti-aliased lines. After a quick search on google, it surprises me that there is no existing handy code piece can meet my needs.</description>
     </item>
     
     <item>
@@ -48,8 +53,8 @@ In screen-space decals rendering, normal buffer is required to reject pixels pro
       <pubDate>Sat, 28 Dec 2019 21:02:15 +0800</pubDate>
       
       <guid>https://atyuwen.github.io/about/</guid>
-      <description>I&#39;m Yuwen Wu (id: atyuwen), a senior graphics &amp;amp; engine programmer at Netease Games. I&#39;m currently working on an in-house cross-platform game engine named Messiah Engine.
-Over the past decade, I gained a lot from so many excellent blogs. Now it&#39;s the 2020s, I&#39;ve decided to start my own blog: C++ Minor, and wish I could also share something usefull to the community &amp;mdash; mostly about algorithms and computer graphics. Following are some additional things I&#39;d like to declare:</description>
+      <description>I&amp;rsquo;m Yuwen Wu (id: atyuwen), a senior graphics &amp;amp; engine programmer at Netease Games. I&amp;rsquo;m currently working on an in-house cross-platform game engine named Messiah Engine.
+Over the past decade, I gained a lot from so many excellent blogs. Now it&amp;rsquo;s the 2020s, I&amp;rsquo;ve decided to start my own blog: C++ Minor, and wish I could also share something usefull to the community &amp;mdash; mostly about algorithms and computer graphics. Following are some additional things I&amp;rsquo;d like to declare:</description>
     </item>
     
   </channel>

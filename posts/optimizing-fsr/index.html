@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<meta name="theme-color" content="#a15a7e">
+	<meta name="msapplication-TileColor" content="#a15a7e">
+<meta itemprop="name" content="Optimizing AMD FSR for Mobiles">
+<meta itemprop="description" content="Recently AMD released its super resolution algorithm named FidelityFX Super Resolution (FSR). Compare to its competitor DLSS that can only be enabled on RTX capable cards, FSR doesn&rsquo;t require any particular hardware support, which makes it very attractive for cross-platform games. However, although FSR is highly optimized and runs efficiently on PCs, it is overweight on Mobiles. This article describes how we optimize FSR greatly on an iPhone 12 without sacrificing too much image quality."><meta itemprop="datePublished" content="2021-08-25T14:12:29+08:00" />
+<meta itemprop="dateModified" content="2021-08-25T14:12:29+08:00" />
+<meta itemprop="wordCount" content="1084">
+<meta itemprop="keywords" content="Graphics," /><meta property="og:title" content="Optimizing AMD FSR for Mobiles" />
+<meta property="og:description" content="Recently AMD released its super resolution algorithm named FidelityFX Super Resolution (FSR). Compare to its competitor DLSS that can only be enabled on RTX capable cards, FSR doesn&rsquo;t require any particular hardware support, which makes it very attractive for cross-platform games. However, although FSR is highly optimized and runs efficiently on PCs, it is overweight on Mobiles. This article describes how we optimize FSR greatly on an iPhone 12 without sacrificing too much image quality." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://atyuwen.github.io/posts/optimizing-fsr/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2021-08-25T14:12:29+08:00" />
+<meta property="article:modified_time" content="2021-08-25T14:12:29+08:00" />
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Optimizing AMD FSR for Mobiles"/>
+<meta name="twitter:description" content="Recently AMD released its super resolution algorithm named FidelityFX Super Resolution (FSR). Compare to its competitor DLSS that can only be enabled on RTX capable cards, FSR doesn&rsquo;t require any particular hardware support, which makes it very attractive for cross-platform games. However, although FSR is highly optimized and runs efficiently on PCs, it is overweight on Mobiles. This article describes how we optimize FSR greatly on an iPhone 12 without sacrificing too much image quality."/>
+
+	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+	<link rel="manifest" href="/site.webmanifest">
+	<link rel="mask-icon" href="/safari-pinned-tab.svg" color="">
+	<link rel="shortcut icon" href="/favicon.ico">
+
+	<title>Optimizing AMD FSR for Mobiles</title>
+	<link rel="stylesheet" href="https://atyuwen.github.io/css/style.min.5c69388648339329f0c230f6adbcb0cb6602c26ec504553c27ed022ca232d7de.css" integrity="sha256-XGk4hkgzkynwwjD2rbywy2YCwm7FBFU8J+0CLKIy194=" crossorigin="anonymous">
+	
+</head>
+
+<body id="page">
+	
+	<header id="site-header" class="animated slideInUp faster">
+		<div class="hdr-wrapper section-inner">
+			<div class="hdr-left">
+				<div class="site-branding">
+					<a href="https://atyuwen.github.io">C&#43;&#43; Minor</a>
+				</div>
+				<nav class="site-nav hide-in-mobile">
+					
+				<a href="https://atyuwen.github.io/posts/">Posts</a>
+				<a href="https://atyuwen.github.io/about/">About</a>
+
+				</nav>
+			</div>
+			<div class="hdr-right hdr-icons">
+				<span class="hdr-social hide-in-mobile"><a href="https://twitter.com/atyuwen" target="_blank" rel="noopener me" title="Twitter"><svg xmlns="http://www.w3.org/2000/svg" class="feather" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path></svg></a><a href="https://github.com/atyuwen" target="_blank" rel="noopener me" title="Github"><svg xmlns="http://www.w3.org/2000/svg" class="feather" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg></a><a href="https://www.linkedin.com/in/yuwen-wu-1105a039" target="_blank" rel="noopener me" title="Linkedin"><svg xmlns="http://www.w3.org/2000/svg" class="feather" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg></a><a href="https://www.zhihu.com/people/atyuwen" target="_blank" rel="noopener me" title="Zhihu"><svg xmlns="http://www.w3.org/2000/svg" class="feather" width="24" height="24" viewBox="0 0 1000 1000" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M351.791 429.531h192.945c0 45.367-21.387 71.939-21.387 71.939h-167.452c3.978 82.183 7.542 187.659 8.817 226.835h159.283c0 0-0.864 67.402-18.578 67.402s-279.98 0-279.98 0 16.851 88.141 39.318 127.054c0 0-83.605 4.511-112.122-106.962s-71.292-178.876-75.828-191.189c-4.536-12.313 24.628-5.833 36.941 0s68.051 25.924 84.253 103.696h86.571c1.166-49.287 4.597-200.336 3.515-226.835h-178.227c-25.276-18.147-33.702-71.939-33.702-71.939h203.709c-8.498-56.255-23.417-128.764-44.275-167.21-33.053-60.922-50.552-116.658-169.802-212.577 0 0-19.443-14.258 40.83-9.074s117.306 20.739 156.84 99.807c20.553 41.107 41.805 93.251 58.387 146.138l-0.055-0.185 167.856-193.264c0 0 22.036 51.848 5.833 108.881l-124.435 139.342-42.124-31.158-0.045-0.151c11.699 41.020 20.112 81.575 22.727 116.858 0.062 0.849 0.126 1.716 0.188 2.592zM584.919 809.966v-668.84h70.319l28.807-80.513 121.876 80.513h153.6v668.84h-374.602zM887.15 213.065h-79.837l-99.579-65.782-23.537 65.782h-24.855v522.261h227.807v-522.261z" transform="translate(0,1000) scale(1,-1)"/></svg></a></span><button id="menu-btn" class="hdr-btn" title="Menu"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-menu"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button>
+			</div>
+		</div>
+	</header>
+	<div id="mobile-menu" class="animated fast">
+		<ul>
+			<li><a href="https://atyuwen.github.io/posts/">Posts</a></li>
+			<li><a href="https://atyuwen.github.io/about/">About</a></li>
+		</ul>
+	</div>
+
+
+	<main class="site-main section-inner animated fadeIn faster">
+		<article class="thin">
+			<header class="post-header">
+				<div class="post-meta"><span>Aug 25, 2021</span></div>
+				<h1>Optimizing AMD FSR for Mobiles</h1>
+			</header>
+			<div class="content">
+				<p>Recently AMD released its super resolution algorithm named <a href="https://gpuopen.com/fidelityfx-superresolution/">FidelityFX Super Resolution (FSR)</a>. Compare to its competitor <a href="https://www.nvidia.com/en-us/geforce/technologies/dlss/">DLSS</a> that can only be enabled on RTX capable cards, FSR doesn&rsquo;t require any particular hardware support, which makes it very attractive for cross-platform games. However, although FSR is highly optimized and runs efficiently on PCs, it is overweight on Mobiles. This article describes how we optimize FSR greatly on an iPhone 12 without sacrificing too much image quality.</p>
+<h2 id="fsr-introduction">FSR Introduction<a href="#fsr-introduction" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+<p><em>Here is a very brief introduction to the FSR algorithm. You can find more details from this <a href="http://advances.realtimerendering.com/s2021/Unity%20AMD%20FSR%20-%20SIGGRAPH%202021.pptx">Siggraph talk</a>.</em></p>
+<p>FSR is a two-pass algorithm. The first pass, EASU (Edge Adaptive Spatial Upsamling), is for upscaling. EASU uses a 12-tap pattern like the following:</p>
+<pre><code>  b c
+e f g h
+i j k l
+  n o
+</code></pre><p>These 12 taps are convoluted using a stretched lanczos(2) kernel. The stretch factor is determined from the gradients of nearby pixels. In a nutshell, the final shaped kernel is an elliptical filter whose major axis is perpendicular to the gradient of the current pixel.</p>
+<p>The second pass is called RCAS (Robust Contract Adaptive Sharpening), which is used for enhancing the image details. RCAS uses a 5 tap filter in a cross pattern:</p>
+<pre><code>  w   
+w 1 w 
+  w   
+</code></pre><p>The negative weight &lsquo;w&rsquo; is carefully chosen per pixel to avoid clipping (exceeds the [0, 1] range).</p>
+<h2 id="fsr-optimization">FSR Optimization<a href="#fsr-optimization" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+<p>We integrated AMD FSR into our engine, and it worked great on PCs. Good performance and nice image quality, AMD YES!!!. Then we tested it on an iPhone 12 with great expectations, but the result frustrated us a lot. The EASU pass takes about 5.4 ms, and RCAS takes about 0.9 ms. A 6.3 ms cost in total is absolutely unacceptable.</p>
+<p>Ok, can we optimize it? Because the cost of the RCAS is reasonable to some extent, our attention is focused on the EASU pass. After several attempts, we managed to reduce the EASU cost from 5.4 ms to 1.8 ms, which is apparently a big win. The following describes how we do that.</p>
+<h3 id="1-using-half-precision">1. Using Half Precision<a href="#1-using-half-precision" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+<p>At first we used the f32 version of EASU for simplicity, but on Mobile devices f16 operations are basically twice the throughput of f32 operations. Since our shader system doesn&rsquo;t support uint16/int16, we have to tweak the original FsrEasuH code a little bit to make it compiles. Simple modification but high profit, the f16 version only takes 4.7 ms.</p>
+<h3 id="2-can-we-remove-deringing">2. Can We Remove Deringing?<a href="#2-can-we-remove-deringing" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+<p>Since EASU uses a lanczos kernel which has negative lobes, ringing artifacts may appear along the strong edges. To eliminate ringing, EASU clips the filtered result against the min-max value from the nearest 2x2 quad. This deringing process spawns a lot of arithmetic instructions. I tried to remove the clipping code completely, then the cost of EASU was reduced to 4.3 ms, another 0.4 ms saved! But how is the ringing? It surprised me that the artifacts are barely noticeable except in some rare cases, I&rsquo;m comfortable with that.</p>
+<h3 id="3-easu-analysis-simplified">3. EASU Analysis Simplified<a href="#3-easu-analysis-simplified" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+<p>The EASU pass has an analysis phase to determine the stretch and rotation of the lanczos kernel. In this phase, the analysis routine <code>FsrEasuSetH</code> is called 4 times and the outputs are bilinear interpolated. Instead of computing 4 times and interpolating the outputs，can we interpolate the inputs and call <code>FsrEasuSetH</code> once? In theory it won&rsquo;t give you the correct result for any non-linear functions, but let&rsquo;s try it. I modified the analysis process like this:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-cpp" data-lang="cpp">  <span class="c1">// Compute bilinear weight.
+</span><span class="c1"></span>  <span class="c1">//  x y
+</span><span class="c1"></span>  <span class="c1">//  z w
+</span><span class="c1"></span>  <span class="n">AH4</span> <span class="n">ww</span> <span class="o">=</span> <span class="n">AH4_</span><span class="p">(</span><span class="mf">0.0</span><span class="p">);</span>
+  <span class="n">ww</span><span class="p">.</span><span class="n">x</span> <span class="o">=</span><span class="p">(</span><span class="n">AH1_</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span><span class="o">-</span><span class="n">ppp</span><span class="p">.</span><span class="n">x</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">AH1_</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span><span class="o">-</span><span class="n">ppp</span><span class="p">.</span><span class="n">y</span><span class="p">);</span>
+  <span class="n">ww</span><span class="p">.</span><span class="n">y</span> <span class="o">=</span>           <span class="n">ppp</span><span class="p">.</span><span class="n">x</span> <span class="o">*</span><span class="p">(</span><span class="n">AH1_</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span><span class="o">-</span><span class="n">ppp</span><span class="p">.</span><span class="n">y</span><span class="p">);</span>
+  <span class="n">ww</span><span class="p">.</span><span class="n">z</span> <span class="o">=</span><span class="p">(</span><span class="n">AF1_</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span><span class="o">-</span><span class="n">ppp</span><span class="p">.</span><span class="n">x</span><span class="p">)</span><span class="o">*</span>           <span class="n">ppp</span><span class="p">.</span><span class="n">y</span> <span class="p">;</span>
+  <span class="n">ww</span><span class="p">.</span><span class="n">w</span> <span class="o">=</span>           <span class="n">ppp</span><span class="p">.</span><span class="n">x</span> <span class="o">*</span>           <span class="n">ppp</span><span class="p">.</span><span class="n">y</span> <span class="p">;</span>
+  <span class="c1">// Direction is the &#39;+&#39; diff.
+</span><span class="c1"></span>  <span class="c1">//    A
+</span><span class="c1"></span>  <span class="c1">//  B C D
+</span><span class="c1"></span>  <span class="c1">//    E
+</span><span class="c1"></span>  <span class="n">AH1</span> <span class="n">lA</span> <span class="o">=</span> <span class="n">dot</span><span class="p">(</span><span class="n">ww</span><span class="p">,</span> <span class="n">AH4</span><span class="p">(</span><span class="n">bL</span><span class="p">,</span> <span class="n">cL</span><span class="p">,</span> <span class="n">fL</span><span class="p">,</span> <span class="n">gL</span><span class="p">));</span>
+  <span class="n">AH1</span> <span class="n">lB</span> <span class="o">=</span> <span class="n">dot</span><span class="p">(</span><span class="n">ww</span><span class="p">,</span> <span class="n">AH4</span><span class="p">(</span><span class="n">eL</span><span class="p">,</span> <span class="n">fL</span><span class="p">,</span> <span class="n">iL</span><span class="p">,</span> <span class="n">jL</span><span class="p">));</span>
+  <span class="n">AH1</span> <span class="n">lC</span> <span class="o">=</span> <span class="n">dot</span><span class="p">(</span><span class="n">ww</span><span class="p">,</span> <span class="n">AH4</span><span class="p">(</span><span class="n">fL</span><span class="p">,</span> <span class="n">gL</span><span class="p">,</span> <span class="n">jL</span><span class="p">,</span> <span class="n">kL</span><span class="p">));</span>
+  <span class="n">AH1</span> <span class="n">lD</span> <span class="o">=</span> <span class="n">dot</span><span class="p">(</span><span class="n">ww</span><span class="p">,</span> <span class="n">AH4</span><span class="p">(</span><span class="n">gL</span><span class="p">,</span> <span class="n">hL</span><span class="p">,</span> <span class="n">kL</span><span class="p">,</span> <span class="n">lL</span><span class="p">));</span>
+  <span class="n">AH1</span> <span class="n">lE</span> <span class="o">=</span> <span class="n">dot</span><span class="p">(</span><span class="n">ww</span><span class="p">,</span> <span class="n">AH4</span><span class="p">(</span><span class="n">jL</span><span class="p">,</span> <span class="n">kL</span><span class="p">,</span> <span class="n">nL</span><span class="p">,</span> <span class="n">oL</span><span class="p">));</span>
+  <span class="c1">// Here FsrEasuSetH is inlined as following:
+</span><span class="c1"></span>  <span class="n">AH1</span> <span class="n">dc</span><span class="o">=</span><span class="n">lD</span><span class="o">-</span><span class="n">lC</span><span class="p">;</span>
+  <span class="n">AH1</span> <span class="n">cb</span><span class="o">=</span><span class="n">lC</span><span class="o">-</span><span class="n">lB</span><span class="p">;</span>
+  <span class="n">AH1</span> <span class="n">lenX</span><span class="o">=</span><span class="n">max</span><span class="p">(</span><span class="n">abs</span><span class="p">(</span><span class="n">dc</span><span class="p">),</span><span class="n">abs</span><span class="p">(</span><span class="n">cb</span><span class="p">));</span>
+  <span class="n">lenX</span><span class="o">=</span><span class="n">ARcpH1</span><span class="p">(</span><span class="n">lenX</span><span class="p">);</span>
+  <span class="n">AH1</span> <span class="n">dirX</span><span class="o">=</span><span class="n">lD</span><span class="o">-</span><span class="n">lB</span><span class="p">;</span>
+  <span class="n">lenX</span><span class="o">=</span><span class="n">ASatH1</span><span class="p">(</span><span class="n">abs</span><span class="p">(</span><span class="n">dirX</span><span class="p">)</span><span class="o">*</span><span class="n">lenX</span><span class="p">);</span>
+  <span class="n">lenX</span><span class="o">*=</span><span class="n">lenX</span><span class="p">;</span>
+  <span class="c1">// Repeat for the y axis.
+</span><span class="c1"></span>  <span class="n">AH1</span> <span class="n">ec</span><span class="o">=</span><span class="n">lE</span><span class="o">-</span><span class="n">lC</span><span class="p">;</span>
+  <span class="n">AH1</span> <span class="n">ca</span><span class="o">=</span><span class="n">lC</span><span class="o">-</span><span class="n">lA</span><span class="p">;</span>
+  <span class="n">AH1</span> <span class="n">lenY</span><span class="o">=</span><span class="n">max</span><span class="p">(</span><span class="n">abs</span><span class="p">(</span><span class="n">ec</span><span class="p">),</span><span class="n">abs</span><span class="p">(</span><span class="n">ca</span><span class="p">));</span>
+  <span class="n">lenY</span><span class="o">=</span><span class="n">ARcpH1</span><span class="p">(</span><span class="n">lenY</span><span class="p">);</span>
+  <span class="n">AH1</span> <span class="n">dirY</span><span class="o">=</span><span class="n">lE</span><span class="o">-</span><span class="n">lA</span><span class="p">;</span>
+  <span class="n">lenY</span><span class="o">=</span><span class="n">ASatH1</span><span class="p">(</span><span class="n">abs</span><span class="p">(</span><span class="n">dirY</span><span class="p">)</span><span class="o">*</span><span class="n">lenY</span><span class="p">);</span>
+  <span class="n">AH1</span> <span class="n">len</span> <span class="o">=</span> <span class="n">lenY</span> <span class="o">*</span> <span class="n">lenY</span> <span class="o">+</span> <span class="n">lenX</span><span class="p">;</span>
+  <span class="n">AH2</span> <span class="n">dir</span> <span class="o">=</span> <span class="n">AH2</span><span class="p">(</span><span class="n">dirX</span><span class="p">,</span> <span class="n">dirY</span><span class="p">);</span>
+</code></pre></div><p>It&rsquo;s such a rude simplification, with which the EASU cost comes to 3.8 ms. But does this decrease the upscaling quality? Not very much! The edge features are still preserved very well, I can hardly tell the difference between before and after.</p>
+<h3 id="4-quit-early">4. Quit Early<a href="#4-quit-early" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+<p>For non-edge pixels, the original EASU still interpolates all the 12 taps. An intuitive idea for optimizating this case is to use a simple bilinear interpolation instead:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-cpp" data-lang="cpp">  <span class="n">AH2</span> <span class="n">dir2</span><span class="o">=</span><span class="n">dir</span><span class="o">*</span><span class="n">dir</span><span class="p">;</span>
+  <span class="n">AH1</span> <span class="n">dirR</span><span class="o">=</span><span class="n">dir2</span><span class="p">.</span><span class="n">x</span><span class="o">+</span><span class="n">dir2</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">dirR</span><span class="o">&lt;</span><span class="n">AH1_</span><span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="mf">64.0</span><span class="p">))</span> <span class="p">{</span>
+    <span class="c1">// Early quit for non-edge pixels
+</span><span class="c1"></span>    <span class="n">pix</span><span class="p">.</span><span class="n">r</span> <span class="o">=</span> <span class="n">dot</span><span class="p">(</span><span class="n">ww</span><span class="p">,</span> <span class="n">AH4</span><span class="p">(</span><span class="n">fR</span><span class="p">,</span> <span class="n">gR</span><span class="p">,</span> <span class="n">jR</span><span class="p">,</span> <span class="n">kR</span><span class="p">));</span>
+    <span class="n">pix</span><span class="p">.</span><span class="n">g</span> <span class="o">=</span> <span class="n">dot</span><span class="p">(</span><span class="n">ww</span><span class="p">,</span> <span class="n">AH4</span><span class="p">(</span><span class="n">fG</span><span class="p">,</span> <span class="n">gG</span><span class="p">,</span> <span class="n">jG</span><span class="p">,</span> <span class="n">kG</span><span class="p">));</span>
+    <span class="n">pix</span><span class="p">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">dot</span><span class="p">(</span><span class="n">ww</span><span class="p">,</span> <span class="n">AH4</span><span class="p">(</span><span class="n">fB</span><span class="p">,</span> <span class="n">gB</span><span class="p">,</span> <span class="n">jB</span><span class="p">,</span> <span class="n">kB</span><span class="p">));</span>
+    <span class="k">return</span><span class="p">;</span>
+  <span class="p">}</span>
+</code></pre></div><p>Since most threadgroups go into this early-quit branch, the cost should be reduced a lot. But after profiling we only see a 0.2 ms improvement. Although the ALU pressure reduced largely, The GPU counters show that now the shader is completely texture bound.</p>
+<h3 id="5-less-texture-fetch">5. Less Texture Fetch<a href="#5-less-texture-fetch" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+<p>So we have to optimize the texture ops. Let&rsquo;s focus on the early-quit code path: In this path, we only need 5 bilinear interpolated lumas to ensure this pixel falls into the non-edge case. How about we sample these 5 taps directly using a bilinear sampler, and defer other taps until we really need them? Not only can it save texture fetches for the early-quit path, but it also saves some ALUs that do the bilinear interpolation manually.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-cpp" data-lang="cpp">  <span class="n">AF2</span> <span class="n">pp</span><span class="o">=</span><span class="p">(</span><span class="n">ip</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">con0</span><span class="p">.</span><span class="n">xy</span><span class="p">)</span><span class="o">+</span><span class="p">(</span><span class="n">con0</span><span class="p">.</span><span class="n">zw</span><span class="p">);</span>
+  <span class="n">AF2</span> <span class="n">tc</span><span class="o">=</span><span class="p">(</span><span class="n">pp</span><span class="o">+</span><span class="n">AF2_</span><span class="p">(</span><span class="mf">0.5</span><span class="p">))</span><span class="o">*</span><span class="n">con1</span><span class="p">.</span><span class="n">xy</span><span class="p">;</span>
+  <span class="n">AH3</span> <span class="n">sA</span><span class="o">=</span><span class="n">FsrEasuSampleH</span><span class="p">(</span><span class="n">tc</span><span class="o">-</span><span class="n">AF2</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">con1</span><span class="p">.</span><span class="n">y</span><span class="p">));</span>
+  <span class="n">AH3</span> <span class="n">sB</span><span class="o">=</span><span class="n">FsrEasuSampleH</span><span class="p">(</span><span class="n">tc</span><span class="o">-</span><span class="n">AF2</span><span class="p">(</span><span class="n">con1</span><span class="p">.</span><span class="n">x</span><span class="p">,</span> <span class="mi">0</span><span class="p">));</span>
+  <span class="n">AH3</span> <span class="n">sC</span><span class="o">=</span><span class="n">FsrEasuSampleH</span><span class="p">(</span><span class="n">tc</span><span class="p">);</span>
+  <span class="n">AH3</span> <span class="n">sD</span><span class="o">=</span><span class="n">FsrEasuSampleH</span><span class="p">(</span><span class="n">tc</span><span class="o">+</span><span class="n">AF2</span><span class="p">(</span><span class="n">con1</span><span class="p">.</span><span class="n">x</span><span class="p">,</span> <span class="mi">0</span><span class="p">));</span>
+  <span class="n">AH3</span> <span class="n">sE</span><span class="o">=</span><span class="n">FsrEasuSampleH</span><span class="p">(</span><span class="n">tc</span><span class="o">+</span><span class="n">AF2</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">con1</span><span class="p">.</span><span class="n">y</span><span class="p">));</span>
+  <span class="n">AH1</span> <span class="n">lA</span><span class="o">=</span><span class="n">sA</span><span class="p">.</span><span class="n">r</span><span class="o">*</span><span class="n">AH1_</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span><span class="o">+</span><span class="n">sA</span><span class="p">.</span><span class="n">g</span><span class="p">;</span>
+  <span class="n">AH1</span> <span class="n">lB</span><span class="o">=</span><span class="n">sB</span><span class="p">.</span><span class="n">r</span><span class="o">*</span><span class="n">AH1_</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span><span class="o">+</span><span class="n">sB</span><span class="p">.</span><span class="n">g</span><span class="p">;</span>
+  <span class="n">AH1</span> <span class="n">lC</span><span class="o">=</span><span class="n">sC</span><span class="p">.</span><span class="n">r</span><span class="o">*</span><span class="n">AH1_</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span><span class="o">+</span><span class="n">sC</span><span class="p">.</span><span class="n">g</span><span class="p">;</span>
+  <span class="n">AH1</span> <span class="n">lD</span><span class="o">=</span><span class="n">sD</span><span class="p">.</span><span class="n">r</span><span class="o">*</span><span class="n">AH1_</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span><span class="o">+</span><span class="n">sD</span><span class="p">.</span><span class="n">g</span><span class="p">;</span>
+  <span class="n">AH1</span> <span class="n">lE</span><span class="o">=</span><span class="n">sE</span><span class="p">.</span><span class="n">r</span><span class="o">*</span><span class="n">AH1_</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span><span class="o">+</span><span class="n">sE</span><span class="p">.</span><span class="n">g</span><span class="p">;</span>
+</code></pre></div><p>This change improves the performance dramatically, the EASU cost goes from 3.6 ms to 1.8 ms. Now the total cost of FSR is 1.8 ms (EASU) + 0.9 ms (RCAS) = 2.7 ms. Don&rsquo;t forget without FSR we still need a pass to copy the offscreen target to back buffer, which takes about 0.7 ms. So the net cost of our optimized FSR is 2.7 ms - 0.7 ms = 2.0 ms. Not extremely efficient but acceptable.</p>
+<h2 id="source-code">Source Code<a href="#source-code" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+<p>OK, that&rsquo;s it. The full source code is listed below, hope you find it useful. If you have any questions or have other ideas to optimize it further, please don&rsquo;t hesitate to leave a comment.</p>
+<script type="application/javascript" src="https://gist.github.com/atyuwen/78d6e810e6d0f7fd4aa6207d416f2eeb.js"></script>
+
+
+			</div>
+			<hr class="post-end">
+			<footer class="post-info">
+				<p>
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg><span class="tag"><a href="https://atyuwen.github.io/tags/graphics">Graphics</a></span>
+				</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>1084 Words</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2021-08-25 14:12 &#43;0800</p>
+			</footer>
+		</article>
+		<div class="post-nav thin">
+			<a class="prev-post" href="https://atyuwen.github.io/posts/bitangent-noise/">
+				<span class="post-nav-label">Older&nbsp;<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span><br><span>Fast Divergence-Free Noise Generation in Shaders</span>
+			</a>
+		</div>
+		<div id="comments" class="thin">
+<div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "cppminor" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</div>
+	</main>
+
+	<script>
+		MathJax = {
+			tex: {inlineMath: [['$', '$'], ['\\(', '\\)']]},
+			svg: {fontCache: 'global'}
+	};
+	</script>
+	<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+	
+	<footer id="site-footer" class="section-inner thin animated fadeIn faster">
+		<p>&copy; 2021 <a href="https://atyuwen.github.io">atyuwen</a> &#183; <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC BY-NC 4.0</a></p>
+		<p>
+			Made with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> &#183; Theme <a href="https://github.com/Track3/hermit" target="_blank" rel="noopener">Hermit</a> &#183; <a href="https://atyuwen.github.io/posts/index.xml" target="_blank" title="rss"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rss"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg></a>
+		</p>
+	</footer>
+
+
+
+	<script src="https://atyuwen.github.io/js/bundle.min.7d8545daa55d62427355498dd8da13f98ff79a7938ce7d2a5e2ae1ec0de3beb8.js" integrity="sha256-fYVF2qVdYkJzVUmN2NoT+Y/3mnk4zn0qXirh7A3jvrg=" crossorigin="anonymous"></script>
+	
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-155205105-1', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+
+</body>
+
+</html>

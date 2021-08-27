@@ -8,22 +8,19 @@
 	<meta name="theme-color" content="#a15a7e">
 	<meta name="msapplication-TileColor" content="#a15a7e">
 <meta itemprop="name" content="Draw Anti-aliased Lines with Geometry Shader">
-<meta itemprop="description" content="For engine programmers, there are many cases you have to draw lines on screen, e.g. rendering a grid on the ground, drawing bounding boxes and other helper objects. Usually it&#39;s not a problem if you are very used to the jaggies, but recently I can&#39;t stand it anymore, my eyes complain to me that they want anti-aliased lines. After a quick search on google, it surprises me that there is no existing handy code piece can meet my needs.">
-<meta itemprop="datePublished" content="2020-01-01T09:20:55&#43;08:00" />
-<meta itemprop="dateModified" content="2020-01-01T09:20:55&#43;08:00" />
-<meta itemprop="wordCount" content="651">
-
-
-
+<meta itemprop="description" content="For engine programmers, there are many cases you have to draw lines on screen, e.g. rendering a grid on the ground, drawing bounding boxes and other helper objects. Usually it&rsquo;s not a problem if you are very used to the jaggies, but recently I can&rsquo;t stand it anymore, my eyes complain to me that they want anti-aliased lines. After a quick search on google, it surprises me that there is no existing handy code piece can meet my needs."><meta itemprop="datePublished" content="2020-01-01T09:20:55+08:00" />
+<meta itemprop="dateModified" content="2020-01-01T09:20:55+08:00" />
+<meta itemprop="wordCount" content="649">
 <meta itemprop="keywords" content="Graphics," /><meta property="og:title" content="Draw Anti-aliased Lines with Geometry Shader" />
-<meta property="og:description" content="For engine programmers, there are many cases you have to draw lines on screen, e.g. rendering a grid on the ground, drawing bounding boxes and other helper objects. Usually it&#39;s not a problem if you are very used to the jaggies, but recently I can&#39;t stand it anymore, my eyes complain to me that they want anti-aliased lines. After a quick search on google, it surprises me that there is no existing handy code piece can meet my needs." />
+<meta property="og:description" content="For engine programmers, there are many cases you have to draw lines on screen, e.g. rendering a grid on the ground, drawing bounding boxes and other helper objects. Usually it&rsquo;s not a problem if you are very used to the jaggies, but recently I can&rsquo;t stand it anymore, my eyes complain to me that they want anti-aliased lines. After a quick search on google, it surprises me that there is no existing handy code piece can meet my needs." />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://atyuwen.github.io/posts/antialiased-line/" />
+<meta property="og:url" content="https://atyuwen.github.io/posts/antialiased-line/" /><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2020-01-01T09:20:55+08:00" />
 <meta property="article:modified_time" content="2020-01-01T09:20:55+08:00" />
+
 <meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="Draw Anti-aliased Lines with Geometry Shader"/>
-<meta name="twitter:description" content="For engine programmers, there are many cases you have to draw lines on screen, e.g. rendering a grid on the ground, drawing bounding boxes and other helper objects. Usually it&#39;s not a problem if you are very used to the jaggies, but recently I can&#39;t stand it anymore, my eyes complain to me that they want anti-aliased lines. After a quick search on google, it surprises me that there is no existing handy code piece can meet my needs."/>
+<meta name="twitter:description" content="For engine programmers, there are many cases you have to draw lines on screen, e.g. rendering a grid on the ground, drawing bounding boxes and other helper objects. Usually it&rsquo;s not a problem if you are very used to the jaggies, but recently I can&rsquo;t stand it anymore, my eyes complain to me that they want anti-aliased lines. After a quick search on google, it surprises me that there is no existing handy code piece can meet my needs."/>
 
 	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
@@ -72,32 +69,31 @@
 				<h1>Draw Anti-aliased Lines with Geometry Shader</h1>
 			</header>
 			<div class="content">
-				<p>For engine programmers, there are many cases you have to draw lines on screen, e.g. rendering a grid on the ground, drawing bounding boxes and other helper objects. Usually it's not a problem if you are very used to the jaggies, but recently I can't stand it anymore, my eyes complain to me that they want anti-aliased lines. After a quick search on google, it surprises me that there is no existing handy code piece can meet my needs. So, it's time to do research!</p>
+				<p>For engine programmers, there are many cases you have to draw lines on screen, e.g. rendering a grid on the ground, drawing bounding boxes and other helper objects. Usually it&rsquo;s not a problem if you are very used to the jaggies, but recently I can&rsquo;t stand it anymore, my eyes complain to me that they want anti-aliased lines. After a quick search on google, it surprises me that there is no existing handy code piece can meet my needs. So, it&rsquo;s time to do research!</p>
 <hr>
-<p>The first thing comes to my eye is an old article &ldquo;Fast Prefiltered Lines&rdquo; <sup id="fnref:1"><a href="#fn:1" class="footnote-ref" role="doc-noteref">1</a></sup>. It describes a method that can draw pretty high quality anti-aliased lines with fixed cost, since the filter is pre-calculated. It's a great article but I can't use it directly for several reasons:</p>
+<p>The first thing comes to my eye is an old article &ldquo;Fast Prefiltered Lines&rdquo; <sup id="fnref:1"><a href="#fn:1" class="footnote-ref" role="doc-noteref">1</a></sup>. It describes a method that can draw pretty high quality anti-aliased lines with fixed cost, since the filter is pre-calculated. It&rsquo;s a great article but I can&rsquo;t use it directly for several reasons:</p>
 <ul>
-<li>It's mainly about drawing 2D lines, so perspective projection is not considered.</li>
+<li>It&rsquo;s mainly about drawing 2D lines, so perspective projection is not considered.</li>
 <li>It uses CPU to calculate edge equations, but I want to keep changes to a minimum in my cpp code.</li>
 <li>It uses shader uniforms to pass the edge equations to pixel shader, which means you can only draw a single line in one DP.</li>
 </ul>
-<p>Fortunately now the programmable pipeline is way more flexible than in 2005. With <strong>geometry shader</strong>, we can do it much easier. Following shows the final rendered image, and I'll describe the details in below.</p>
-<figure>
-    <img src="/posts/images/messiah-line.png" width="500px"/> 
+<p>Fortunately now the programmable pipeline is way more flexible than in 2005. With <strong>geometry shader</strong>, we can do it much easier. Following shows the final rendered image, and I&rsquo;ll describe the details in below.</p>
+<figure><img src="/posts/images/messiah-line.png" width="500px"/>
 </figure>
 
 <hr>
 <p>First, draw lines as usual: there is no change needed for host code and vertex shader. Then, add following geometry shader to expand 1-pixel-width lines to 3-pixel-width quads in screen space, and store <em>distance to line center</em> in <code>TexCoord.x</code>:</p>
-<div class="highlight"><pre class="chroma"><code class="language-cpp" data-lang="cpp"><span class="k">struct</span> <span class="nc">GeometryOutput</span>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-cpp" data-lang="cpp"><span class="k">struct</span> <span class="nc">GeometryOutput</span>
 <span class="p">{</span>
 	<span class="n">float4</span>                <span class="nl">HPosition</span> <span class="p">:</span> <span class="n">SV_Position</span><span class="p">;</span>
 <span class="hl">	<span class="n">noperspective</span> <span class="n">float2</span>  <span class="nl">TexCoord</span>  <span class="p">:</span> <span class="n">TEXCOORDN</span><span class="p">;</span>           <span class="c1">// section 2
-</span></span><span class="c1"></span><span class="p">}</span><span class="p">;</span>
+</span></span><span class="c1"></span><span class="p">};</span>
 
-<span class="p">[</span><span class="n">maxvertexcount</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span><span class="p">]</span>
-<span class="kt">void</span> <span class="n">AALineGS</span><span class="p">(</span><span class="n">line</span> <span class="n">VertexOutput</span> <span class="n">IN</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="p">,</span> <span class="n">inout</span> <span class="n">TriangleStream</span><span class="o">&lt;</span><span class="n">GeometryOutput</span><span class="o">&gt;</span> <span class="n">OUT</span><span class="p">)</span>
+<span class="p">[</span><span class="n">maxvertexcount</span><span class="p">(</span><span class="mi">4</span><span class="p">)]</span>
+<span class="kt">void</span> <span class="n">AALineGS</span><span class="p">(</span><span class="n">line</span> <span class="n">VertexOutput</span> <span class="n">IN</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">inout</span> <span class="n">TriangleStream</span><span class="o">&lt;</span><span class="n">GeometryOutput</span><span class="o">&gt;</span> <span class="n">OUT</span><span class="p">)</span>
 <span class="p">{</span>
-	<span class="n">VertexOutput</span> <span class="n">P0</span> <span class="o">=</span> <span class="n">IN</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="p">;</span>
-	<span class="n">VertexOutput</span> <span class="n">P1</span> <span class="o">=</span> <span class="n">IN</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="p">;</span>
+	<span class="n">VertexOutput</span> <span class="n">P0</span> <span class="o">=</span> <span class="n">IN</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+	<span class="n">VertexOutput</span> <span class="n">P1</span> <span class="o">=</span> <span class="n">IN</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
 	<span class="k">if</span> <span class="p">(</span><span class="n">P0</span><span class="p">.</span><span class="n">HPosition</span><span class="p">.</span><span class="n">w</span> <span class="o">&gt;</span> <span class="n">P1</span><span class="p">.</span><span class="n">HPosition</span><span class="p">.</span><span class="n">w</span><span class="p">)</span>
 	<span class="p">{</span>
 		<span class="n">VertexOutput</span> <span class="n">temp</span> <span class="o">=</span> <span class="n">P0</span><span class="p">;</span>
@@ -106,58 +102,57 @@
 	<span class="p">}</span>
 <span class="hl">	<span class="k">if</span> <span class="p">(</span><span class="n">P0</span><span class="p">.</span><span class="n">HPosition</span><span class="p">.</span><span class="n">w</span> <span class="o">&lt;</span> <span class="n">NearPlane</span><span class="p">)</span>                        <span class="c1">// section 1
 </span></span><span class="hl"><span class="c1"></span>	<span class="p">{</span>
-</span><span class="hl">		<span class="kt">float</span> <span class="n">ratio</span> <span class="o">=</span> <span class="p">(</span><span class="n">NearPlane</span> <span class="o">-</span> <span class="n">P0</span><span class="p">.</span><span class="n">HPosition</span><span class="p">.</span><span class="n">w</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">P1</span><span class="p">.</span><span class="n">HPosition</span><span class="p">.</span><span class="n">w</span> <span class="o">-</span> <span class="n">P0</span><span class="p">.</span><span class="n">HPosition</span><span class="p">.</span><span class="n">w</span><span class="p">)</span><span class="p">;</span>
-</span><span class="hl">		<span class="n">P0</span><span class="p">.</span><span class="n">HPosition</span> <span class="o">=</span> <span class="n">lerp</span><span class="p">(</span><span class="n">P0</span><span class="p">.</span><span class="n">HPosition</span><span class="p">,</span> <span class="n">P1</span><span class="p">.</span><span class="n">HPosition</span><span class="p">,</span> <span class="n">ratio</span><span class="p">)</span><span class="p">;</span>
+</span><span class="hl">		<span class="kt">float</span> <span class="n">ratio</span> <span class="o">=</span> <span class="p">(</span><span class="n">NearPlane</span> <span class="o">-</span> <span class="n">P0</span><span class="p">.</span><span class="n">HPosition</span><span class="p">.</span><span class="n">w</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">P1</span><span class="p">.</span><span class="n">HPosition</span><span class="p">.</span><span class="n">w</span> <span class="o">-</span> <span class="n">P0</span><span class="p">.</span><span class="n">HPosition</span><span class="p">.</span><span class="n">w</span><span class="p">);</span>
+</span><span class="hl">		<span class="n">P0</span><span class="p">.</span><span class="n">HPosition</span> <span class="o">=</span> <span class="n">lerp</span><span class="p">(</span><span class="n">P0</span><span class="p">.</span><span class="n">HPosition</span><span class="p">,</span> <span class="n">P1</span><span class="p">.</span><span class="n">HPosition</span><span class="p">,</span> <span class="n">ratio</span><span class="p">);</span>
 </span><span class="hl">	<span class="p">}</span>
 </span>
 	<span class="n">float2</span> <span class="n">a</span> <span class="o">=</span> <span class="n">P0</span><span class="p">.</span><span class="n">HPosition</span><span class="p">.</span><span class="n">xy</span> <span class="o">/</span> <span class="n">P0</span><span class="p">.</span><span class="n">HPosition</span><span class="p">.</span><span class="n">w</span><span class="p">;</span>
 	<span class="n">float2</span> <span class="n">b</span> <span class="o">=</span> <span class="n">P1</span><span class="p">.</span><span class="n">HPosition</span><span class="p">.</span><span class="n">xy</span> <span class="o">/</span> <span class="n">P1</span><span class="p">.</span><span class="n">HPosition</span><span class="p">.</span><span class="n">w</span><span class="p">;</span>
-	<span class="n">float2</span> <span class="n">c</span> <span class="o">=</span> <span class="n">normalize</span><span class="p">(</span><span class="n">float2</span><span class="p">(</span><span class="n">a</span><span class="p">.</span><span class="n">y</span> <span class="o">-</span> <span class="n">b</span><span class="p">.</span><span class="n">y</span><span class="p">,</span> <span class="n">b</span><span class="p">.</span><span class="n">x</span> <span class="o">-</span> <span class="n">a</span><span class="p">.</span><span class="n">x</span><span class="p">)</span><span class="p">)</span> <span class="o">/</span> <span class="n">ScreenSize</span> <span class="o">*</span> <span class="mi">3</span><span class="p">;</span>
+	<span class="n">float2</span> <span class="n">c</span> <span class="o">=</span> <span class="n">normalize</span><span class="p">(</span><span class="n">float2</span><span class="p">(</span><span class="n">a</span><span class="p">.</span><span class="n">y</span> <span class="o">-</span> <span class="n">b</span><span class="p">.</span><span class="n">y</span><span class="p">,</span> <span class="n">b</span><span class="p">.</span><span class="n">x</span> <span class="o">-</span> <span class="n">a</span><span class="p">.</span><span class="n">x</span><span class="p">))</span> <span class="o">/</span> <span class="n">ScreenSize</span> <span class="o">*</span> <span class="mi">3</span><span class="p">;</span>
 
 	<span class="n">GeometryOutput</span> <span class="n">g0</span><span class="p">;</span>
-	<span class="n">g0</span><span class="p">.</span><span class="n">HPosition</span> <span class="o">=</span> <span class="n">float4</span><span class="p">(</span><span class="n">P0</span><span class="p">.</span><span class="n">HPosition</span><span class="p">.</span><span class="n">xy</span> <span class="o">+</span> <span class="n">c</span> <span class="o">*</span> <span class="n">P0</span><span class="p">.</span><span class="n">HPosition</span><span class="p">.</span><span class="n">w</span><span class="p">,</span> <span class="n">P0</span><span class="p">.</span><span class="n">HPosition</span><span class="p">.</span><span class="n">zw</span><span class="p">)</span><span class="p">;</span>
-	<span class="n">g0</span><span class="p">.</span><span class="n">TexCoord</span> <span class="o">=</span> <span class="n">float2</span><span class="p">(</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span><span class="p">;</span>
+	<span class="n">g0</span><span class="p">.</span><span class="n">HPosition</span> <span class="o">=</span> <span class="n">float4</span><span class="p">(</span><span class="n">P0</span><span class="p">.</span><span class="n">HPosition</span><span class="p">.</span><span class="n">xy</span> <span class="o">+</span> <span class="n">c</span> <span class="o">*</span> <span class="n">P0</span><span class="p">.</span><span class="n">HPosition</span><span class="p">.</span><span class="n">w</span><span class="p">,</span> <span class="n">P0</span><span class="p">.</span><span class="n">HPosition</span><span class="p">.</span><span class="n">zw</span><span class="p">);</span>
+	<span class="n">g0</span><span class="p">.</span><span class="n">TexCoord</span> <span class="o">=</span> <span class="n">float2</span><span class="p">(</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">);</span>
 	<span class="n">GeometryOutput</span> <span class="n">g1</span><span class="p">;</span>
-	<span class="n">g1</span><span class="p">.</span><span class="n">HPosition</span> <span class="o">=</span> <span class="n">float4</span><span class="p">(</span><span class="n">P0</span><span class="p">.</span><span class="n">HPosition</span><span class="p">.</span><span class="n">xy</span> <span class="o">-</span> <span class="n">c</span> <span class="o">*</span> <span class="n">P0</span><span class="p">.</span><span class="n">HPosition</span><span class="p">.</span><span class="n">w</span><span class="p">,</span> <span class="n">P0</span><span class="p">.</span><span class="n">HPosition</span><span class="p">.</span><span class="n">zw</span><span class="p">)</span><span class="p">;</span>
-	<span class="n">g1</span><span class="p">.</span><span class="n">TexCoord</span> <span class="o">=</span> <span class="n">float2</span><span class="p">(</span><span class="o">-</span><span class="mf">1.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span><span class="p">;</span>
+	<span class="n">g1</span><span class="p">.</span><span class="n">HPosition</span> <span class="o">=</span> <span class="n">float4</span><span class="p">(</span><span class="n">P0</span><span class="p">.</span><span class="n">HPosition</span><span class="p">.</span><span class="n">xy</span> <span class="o">-</span> <span class="n">c</span> <span class="o">*</span> <span class="n">P0</span><span class="p">.</span><span class="n">HPosition</span><span class="p">.</span><span class="n">w</span><span class="p">,</span> <span class="n">P0</span><span class="p">.</span><span class="n">HPosition</span><span class="p">.</span><span class="n">zw</span><span class="p">);</span>
+	<span class="n">g1</span><span class="p">.</span><span class="n">TexCoord</span> <span class="o">=</span> <span class="n">float2</span><span class="p">(</span><span class="o">-</span><span class="mf">1.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">);</span>
 	<span class="n">GeometryOutput</span> <span class="n">g2</span><span class="p">;</span>
-	<span class="n">g2</span><span class="p">.</span><span class="n">HPosition</span> <span class="o">=</span> <span class="n">float4</span><span class="p">(</span><span class="n">P1</span><span class="p">.</span><span class="n">HPosition</span><span class="p">.</span><span class="n">xy</span> <span class="o">+</span> <span class="n">c</span> <span class="o">*</span> <span class="n">P1</span><span class="p">.</span><span class="n">HPosition</span><span class="p">.</span><span class="n">w</span><span class="p">,</span> <span class="n">P1</span><span class="p">.</span><span class="n">HPosition</span><span class="p">.</span><span class="n">zw</span><span class="p">)</span><span class="p">;</span>
-	<span class="n">g2</span><span class="p">.</span><span class="n">TexCoord</span> <span class="o">=</span> <span class="n">float2</span><span class="p">(</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span><span class="p">;</span>
+	<span class="n">g2</span><span class="p">.</span><span class="n">HPosition</span> <span class="o">=</span> <span class="n">float4</span><span class="p">(</span><span class="n">P1</span><span class="p">.</span><span class="n">HPosition</span><span class="p">.</span><span class="n">xy</span> <span class="o">+</span> <span class="n">c</span> <span class="o">*</span> <span class="n">P1</span><span class="p">.</span><span class="n">HPosition</span><span class="p">.</span><span class="n">w</span><span class="p">,</span> <span class="n">P1</span><span class="p">.</span><span class="n">HPosition</span><span class="p">.</span><span class="n">zw</span><span class="p">);</span>
+	<span class="n">g2</span><span class="p">.</span><span class="n">TexCoord</span> <span class="o">=</span> <span class="n">float2</span><span class="p">(</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">);</span>
 	<span class="n">GeometryOutput</span> <span class="n">g3</span><span class="p">;</span>
-	<span class="n">g3</span><span class="p">.</span><span class="n">HPosition</span> <span class="o">=</span> <span class="n">float4</span><span class="p">(</span><span class="n">P1</span><span class="p">.</span><span class="n">HPosition</span><span class="p">.</span><span class="n">xy</span> <span class="o">-</span> <span class="n">c</span> <span class="o">*</span> <span class="n">P1</span><span class="p">.</span><span class="n">HPosition</span><span class="p">.</span><span class="n">w</span><span class="p">,</span> <span class="n">P1</span><span class="p">.</span><span class="n">HPosition</span><span class="p">.</span><span class="n">zw</span><span class="p">)</span><span class="p">;</span>
-	<span class="n">g3</span><span class="p">.</span><span class="n">TexCoord</span> <span class="o">=</span> <span class="n">float2</span><span class="p">(</span><span class="o">-</span><span class="mf">1.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span><span class="p">;</span>
+	<span class="n">g3</span><span class="p">.</span><span class="n">HPosition</span> <span class="o">=</span> <span class="n">float4</span><span class="p">(</span><span class="n">P1</span><span class="p">.</span><span class="n">HPosition</span><span class="p">.</span><span class="n">xy</span> <span class="o">-</span> <span class="n">c</span> <span class="o">*</span> <span class="n">P1</span><span class="p">.</span><span class="n">HPosition</span><span class="p">.</span><span class="n">w</span><span class="p">,</span> <span class="n">P1</span><span class="p">.</span><span class="n">HPosition</span><span class="p">.</span><span class="n">zw</span><span class="p">);</span>
+	<span class="n">g3</span><span class="p">.</span><span class="n">TexCoord</span> <span class="o">=</span> <span class="n">float2</span><span class="p">(</span><span class="o">-</span><span class="mf">1.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">);</span>
 
-	<span class="n">OUT</span><span class="p">.</span><span class="n">Append</span><span class="p">(</span><span class="n">g0</span><span class="p">)</span><span class="p">;</span>
-	<span class="n">OUT</span><span class="p">.</span><span class="n">Append</span><span class="p">(</span><span class="n">g1</span><span class="p">)</span><span class="p">;</span>
-	<span class="n">OUT</span><span class="p">.</span><span class="n">Append</span><span class="p">(</span><span class="n">g2</span><span class="p">)</span><span class="p">;</span>
-	<span class="n">OUT</span><span class="p">.</span><span class="n">Append</span><span class="p">(</span><span class="n">g3</span><span class="p">)</span><span class="p">;</span>
-	<span class="n">OUT</span><span class="p">.</span><span class="n">RestartStrip</span><span class="p">(</span><span class="p">)</span><span class="p">;</span>
+	<span class="n">OUT</span><span class="p">.</span><span class="n">Append</span><span class="p">(</span><span class="n">g0</span><span class="p">);</span>
+	<span class="n">OUT</span><span class="p">.</span><span class="n">Append</span><span class="p">(</span><span class="n">g1</span><span class="p">);</span>
+	<span class="n">OUT</span><span class="p">.</span><span class="n">Append</span><span class="p">(</span><span class="n">g2</span><span class="p">);</span>
+	<span class="n">OUT</span><span class="p">.</span><span class="n">Append</span><span class="p">(</span><span class="n">g3</span><span class="p">);</span>
+	<span class="n">OUT</span><span class="p">.</span><span class="n">RestartStrip</span><span class="p">();</span>
 <span class="p">}</span>
 </code></pre></div><p>The above code is pretty straightforward, except two places I would like to explain further:</p>
 <ul>
-<li>The highlighted <em>section 1</em> does a manual near-plane clipping to ensure all lines passed out are <strong>internal lines</strong>. This is necessary because it's meaningless to calculate screen position for points behind the camera, which will mess things up.</li>
+<li>The highlighted <em>section 1</em> does a manual near-plane clipping to ensure all lines passed out are <strong>internal lines</strong>. This is necessary because it&rsquo;s meaningless to calculate screen position for points behind the camera, which will mess things up.</li>
 <li>The keyword <strong>noperspective</strong> in <em>section 2</em> is to tell the rasterizer to interpolate <code>TexCoord</code> in screen space rather than in world space, which is exactly what we want, since we are drawing lines with constant width in pixels.</li>
 </ul>
 <hr>
-<p>Finally the pixel shader. Since we already have <code>TexCoord.x</code> represents the distance field, it's not difficult to fade the pixel base on that to get anti-aliased lines. However, in order to get better AA quality, we have to choose the filter very carefully. It turns out $2^{-2.7 \cdot d \cdot d}$ can fit the <strong>cone filter kernel</strong> <sup id="fnref:2"><a href="#fn:2" class="footnote-ref" role="doc-noteref">2</a></sup> very well.</p>
-<figure>
-    <img src="/posts/images/line-filter.png" width="500px"/> 
+<p>Finally the pixel shader. Since we already have <code>TexCoord.x</code> represents the distance field, it&rsquo;s not difficult to fade the pixel base on that to get anti-aliased lines. However, in order to get better AA quality, we have to choose the filter very carefully. It turns out $2^{-2.7 \cdot d \cdot d}$ can fit the <strong>cone filter kernel</strong> <sup id="fnref:2"><a href="#fn:2" class="footnote-ref" role="doc-noteref">2</a></sup> very well.</p>
+<figure><img src="/posts/images/line-filter.png" width="500px"/>
 </figure>
 
 <p>Now here is the full PS code, and we are done!</p>
-<div class="highlight"><pre class="chroma"><code class="language-cpp" data-lang="cpp"><span class="n">float4</span> <span class="nf">AALinePS</span><span class="p">(</span><span class="n">in</span> <span class="n">GeometryOutput</span> <span class="n">IN</span><span class="p">)</span> <span class="o">:</span> <span class="n">SV_Target</span>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-cpp" data-lang="cpp"><span class="n">float4</span> <span class="nf">AALinePS</span><span class="p">(</span><span class="n">in</span> <span class="n">GeometryOutput</span> <span class="n">IN</span><span class="p">)</span> <span class="o">:</span> <span class="n">SV_Target</span>
 <span class="p">{</span>
-	<span class="kt">float</span> <span class="n">a</span> <span class="o">=</span> <span class="n">exp2</span><span class="p">(</span><span class="o">-</span><span class="mf">2.7</span> <span class="o">*</span> <span class="n">IN</span><span class="p">.</span><span class="n">TexCoord</span><span class="p">.</span><span class="n">x</span> <span class="o">*</span> <span class="n">IN</span><span class="p">.</span><span class="n">TexCoord</span><span class="p">.</span><span class="n">x</span><span class="p">)</span><span class="p">;</span>
-	<span class="k">return</span> <span class="n">float4</span><span class="p">(</span><span class="n">LineColor</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span><span class="p">;</span>
+	<span class="kt">float</span> <span class="n">a</span> <span class="o">=</span> <span class="n">exp2</span><span class="p">(</span><span class="o">-</span><span class="mf">2.7</span> <span class="o">*</span> <span class="n">IN</span><span class="p">.</span><span class="n">TexCoord</span><span class="p">.</span><span class="n">x</span> <span class="o">*</span> <span class="n">IN</span><span class="p">.</span><span class="n">TexCoord</span><span class="p">.</span><span class="n">x</span><span class="p">);</span>
+	<span class="k">return</span> <span class="n">float4</span><span class="p">(</span><span class="n">LineColor</span><span class="p">,</span> <span class="n">a</span><span class="p">);</span>
 <span class="p">}</span>
 </code></pre></div><section class="footnotes" role="doc-endnotes">
 <hr>
 <ol>
 <li id="fn:1" role="doc-endnote">
-<p>Eric Chan and Frédo Durand. “Fast Prefiltered Lines”. In GPU Gems 2, Addison-Wesley, 2005, pp. 345–359. <a href="#fnref:1" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+<p>Eric Chan and Frédo Durand. “Fast Prefiltered Lines”. In GPU Gems 2, Addison-Wesley, 2005, pp. 345–359.&#160;<a href="#fnref:1" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
 </li>
 <li id="fn:2" role="doc-endnote">
-<p>McNamara, Robert, Joel McCormack, and Norman P. Jouppi. 2000. &ldquo;Prefiltered Antialiased Lines Using Half-Plane Distance Functions.&rdquo; In Proceedings of the ACM SIGGRAPH/Eurographics Workshop on Graphics Hardware, pp. 77–85. <a href="#fnref:2" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+<p>McNamara, Robert, Joel McCormack, and Norman P. Jouppi. 2000. &ldquo;Prefiltered Antialiased Lines Using Half-Plane Distance Functions.&rdquo; In Proceedings of the ACM SIGGRAPH/Eurographics Workshop on Graphics Hardware, pp. 77–85.&#160;<a href="#fnref:2" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
 </li>
 </ol>
 </section>
@@ -168,7 +163,7 @@
 				<p>
 					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg><span class="tag"><a href="https://atyuwen.github.io/tags/graphics">Graphics</a></span>
 				</p>
-				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>651 Words</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>649 Words</p>
 				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2020-01-01 09:20 &#43;0800</p>
 			</footer>
 		</article>
@@ -218,7 +213,7 @@
 
 
 
-	<script src="https://atyuwen.github.io/js/bundle.min.4a9a0ac3d2217822c7865b4161e6c2a71de1d70492264337755427898dd718f6.js" integrity="sha256-SpoKw9IheCLHhltBYebCpx3h1wSSJkM3dVQniY3XGPY=" crossorigin="anonymous"></script>
+	<script src="https://atyuwen.github.io/js/bundle.min.7d8545daa55d62427355498dd8da13f98ff79a7938ce7d2a5e2ae1ec0de3beb8.js" integrity="sha256-fYVF2qVdYkJzVUmN2NoT+Y/3mnk4zn0qXirh7A3jvrg=" crossorigin="anonymous"></script>
 	
 <script type="application/javascript">
 var doNotTrack = false;
