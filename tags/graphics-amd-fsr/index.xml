@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Graphics, AMD FSR on C&#43;&#43; Minor</title>
+    <link>https://atyuwen.github.io/tags/graphics-amd-fsr/</link>
+    <description>Recent content in Graphics, AMD FSR on C&#43;&#43; Minor</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
+    <lastBuildDate>Wed, 25 Aug 2021 14:12:29 +0800</lastBuildDate><atom:link href="https://atyuwen.github.io/tags/graphics-amd-fsr/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Optimizing AMD FSR for Mobiles</title>
+      <link>https://atyuwen.github.io/posts/optimizing-fsr/</link>
+      <pubDate>Wed, 25 Aug 2021 14:12:29 +0800</pubDate>
+      
+      <guid>https://atyuwen.github.io/posts/optimizing-fsr/</guid>
+      <description>Recently AMD released its super resolution algorithm named FidelityFX Super Resolution (FSR). Compare to its competitor DLSS that can only be enabled on RTX capable cards, FSR doesn&amp;rsquo;t require any particular hardware support, which makes it very attractive for cross-platform games. However, although FSR is highly optimized and runs efficiently on PCs, it is overweight on Mobiles. This article describes how we optimize FSR greatly on an iPhone 12 without sacrificing too much image quality.</description>
+    </item>
+    
+  </channel>
+</rss>

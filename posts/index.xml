@@ -102,14 +102,14 @@ w 1 w
   <span class="n">AH1</span> <span class="n">lE</span><span class="o">=</span><span class="n">sE</span><span class="p">.</span><span class="n">r</span><span class="o">*</span><span class="n">AH1_</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span><span class="o">+</span><span class="n">sE</span><span class="p">.</span><span class="n">g</span><span class="p">;</span>
 </code></pre></div><p>This change improves the performance dramatically, the EASU cost goes from 3.6 ms to 1.8 ms. Now the total cost of FSR is 1.8 ms (EASU) + 0.9 ms (RCAS) = 2.7 ms. Don&rsquo;t forget without FSR we still need a pass to copy the offscreen target to back buffer, which takes about 0.7 ms. So the net cost of our optimized FSR is 2.7 ms - 0.7 ms = 2.0 ms. Not extremely efficient but we are satisfied.</p>
 <h2 id="source-code">Source Code</h2>
-<p>OK, that&rsquo;s it. The full source code is listed below (<a href="https://gist.github.com/atyuwen/78d6e810e6d0f7fd4aa6207d416f2eeb">Gist</a>), hope you find it useful. If you have any questions or have other ideas to optimize it further, please don&rsquo;t hesitate to leave a comment.</p>
+<p>OK, that&rsquo;s it. The full source code is listed below (<a href="https://gist.github.com/atyuwen/78d6e810e6d0f7fd4aa6207d416f2eeb">Gist link</a>), hope you find it useful. If you have any questions or have other ideas to optimize it further, please don&rsquo;t hesitate to leave a comment.</p>
 <script type="application/javascript" src="https://gist.github.com/atyuwen/78d6e810e6d0f7fd4aa6207d416f2eeb.js"></script>
 
 <section class="footnotes" role="doc-endnotes">
 <hr>
 <ol>
 <li id="fn:1" role="doc-endnote">
-<p>The native resolution of iPhone 12 is 2532 x 1170, and the render resolution is 0.7x, i.e. 1772 x 819.&#160;<a href="#fnref:1" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+<p>The native resolution of iPhone 12 is 2532 x 1170, and the render resolution we used here is 0.7x, i.e. 1772 x 819.&#160;<a href="#fnref:1" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
 </li>
 </ol>
 </section>

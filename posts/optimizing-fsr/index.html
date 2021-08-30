@@ -10,7 +10,7 @@
 <meta itemprop="name" content="Optimizing AMD FSR for Mobiles">
 <meta itemprop="description" content="Recently AMD released its super resolution algorithm named FidelityFX Super Resolution (FSR). Compare to its competitor DLSS that can only be enabled on RTX capable cards, FSR doesn&rsquo;t require any particular hardware support, which makes it very attractive for cross-platform games. However, although FSR is highly optimized and runs efficiently on PCs, it is overweight on Mobiles. This article describes how we optimize FSR greatly on an iPhone 12 without sacrificing too much image quality."><meta itemprop="datePublished" content="2021-08-25T14:12:29+08:00" />
 <meta itemprop="dateModified" content="2021-08-25T14:12:29+08:00" />
-<meta itemprop="wordCount" content="1108">
+<meta itemprop="wordCount" content="1112">
 <meta itemprop="keywords" content="Graphics," /><meta property="og:title" content="Optimizing AMD FSR for Mobiles" />
 <meta property="og:description" content="Recently AMD released its super resolution algorithm named FidelityFX Super Resolution (FSR). Compare to its competitor DLSS that can only be enabled on RTX capable cards, FSR doesn&rsquo;t require any particular hardware support, which makes it very attractive for cross-platform games. However, although FSR is highly optimized and runs efficiently on PCs, it is overweight on Mobiles. This article describes how we optimize FSR greatly on an iPhone 12 without sacrificing too much image quality." />
 <meta property="og:type" content="article" />
@@ -155,14 +155,14 @@ w 1 w
   <span class="n">AH1</span> <span class="n">lE</span><span class="o">=</span><span class="n">sE</span><span class="p">.</span><span class="n">r</span><span class="o">*</span><span class="n">AH1_</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span><span class="o">+</span><span class="n">sE</span><span class="p">.</span><span class="n">g</span><span class="p">;</span>
 </code></pre></div><p>This change improves the performance dramatically, the EASU cost goes from 3.6 ms to 1.8 ms. Now the total cost of FSR is 1.8 ms (EASU) + 0.9 ms (RCAS) = 2.7 ms. Don&rsquo;t forget without FSR we still need a pass to copy the offscreen target to back buffer, which takes about 0.7 ms. So the net cost of our optimized FSR is 2.7 ms - 0.7 ms = 2.0 ms. Not extremely efficient but we are satisfied.</p>
 <h2 id="source-code">Source Code<a href="#source-code" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
-<p>OK, that&rsquo;s it. The full source code is listed below (<a href="https://gist.github.com/atyuwen/78d6e810e6d0f7fd4aa6207d416f2eeb">Gist</a>), hope you find it useful. If you have any questions or have other ideas to optimize it further, please don&rsquo;t hesitate to leave a comment.</p>
+<p>OK, that&rsquo;s it. The full source code is listed below (<a href="https://gist.github.com/atyuwen/78d6e810e6d0f7fd4aa6207d416f2eeb">Gist link</a>), hope you find it useful. If you have any questions or have other ideas to optimize it further, please don&rsquo;t hesitate to leave a comment.</p>
 <script type="application/javascript" src="https://gist.github.com/atyuwen/78d6e810e6d0f7fd4aa6207d416f2eeb.js"></script>
 
 <section class="footnotes" role="doc-endnotes">
 <hr>
 <ol>
 <li id="fn:1" role="doc-endnote">
-<p>The native resolution of iPhone 12 is 2532 x 1170, and the render resolution is 0.7x, i.e. 1772 x 819.&#160;<a href="#fnref:1" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+<p>The native resolution of iPhone 12 is 2532 x 1170, and the render resolution we used here is 0.7x, i.e. 1772 x 819.&#160;<a href="#fnref:1" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
 </li>
 </ol>
 </section>
@@ -173,7 +173,7 @@ w 1 w
 				<p>
 					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg><span class="tag"><a href="https://atyuwen.github.io/tags/graphics">Graphics</a></span>
 				</p>
-				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>1108 Words</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>1112 Words</p>
 				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2021-08-25 14:12 &#43;0800</p>
 			</footer>
 		</article>
