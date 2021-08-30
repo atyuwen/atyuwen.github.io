@@ -10,7 +10,7 @@
 <meta itemprop="name" content="Optimizing AMD FSR for Mobiles">
 <meta itemprop="description" content="Recently AMD released its super resolution algorithm named FidelityFX Super Resolution (FSR). Compare to its competitor DLSS that can only be enabled on RTX capable cards, FSR doesn&rsquo;t require any particular hardware support, which makes it very attractive for cross-platform games. However, although FSR is highly optimized and runs efficiently on PCs, it is overweight on Mobiles. This article describes how we optimize FSR greatly on an iPhone 12 without sacrificing too much image quality."><meta itemprop="datePublished" content="2021-08-25T14:12:29+08:00" />
 <meta itemprop="dateModified" content="2021-08-25T14:12:29+08:00" />
-<meta itemprop="wordCount" content="1086">
+<meta itemprop="wordCount" content="1108">
 <meta itemprop="keywords" content="Graphics," /><meta property="og:title" content="Optimizing AMD FSR for Mobiles" />
 <meta property="og:description" content="Recently AMD released its super resolution algorithm named FidelityFX Super Resolution (FSR). Compare to its competitor DLSS that can only be enabled on RTX capable cards, FSR doesn&rsquo;t require any particular hardware support, which makes it very attractive for cross-platform games. However, although FSR is highly optimized and runs efficiently on PCs, it is overweight on Mobiles. This article describes how we optimize FSR greatly on an iPhone 12 without sacrificing too much image quality." />
 <meta property="og:type" content="article" />
@@ -71,20 +71,20 @@
 			<div class="content">
 				<p>Recently AMD released its super resolution algorithm named <a href="https://gpuopen.com/fidelityfx-superresolution/">FidelityFX Super Resolution (FSR)</a>. Compare to its competitor <a href="https://www.nvidia.com/en-us/geforce/technologies/dlss/">DLSS</a> that can only be enabled on RTX capable cards, FSR doesn&rsquo;t require any particular hardware support, which makes it very attractive for cross-platform games. However, although FSR is highly optimized and runs efficiently on PCs, it is overweight on Mobiles. This article describes how we optimize FSR greatly on an iPhone 12 without sacrificing too much image quality.</p>
 <h2 id="fsr-introduction">FSR Introduction<a href="#fsr-introduction" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
-<p><em>Here is a very brief introduction to the FSR algorithm. You can find more details from this <a href="http://advances.realtimerendering.com/s2021/Unity%20AMD%20FSR%20-%20SIGGRAPH%202021.pptx">Siggraph talk</a>.</em></p>
+<p><em>Here is a very brief introduction to the FSR algorithm. You can find more details from this <a href="https://advances.realtimerendering.com/s2021/Unity%20AMD%20FSR%20-%20SIGGRAPH%202021.pdf">Siggraph talk</a>.</em></p>
 <p>FSR is a two-pass algorithm. The first pass, EASU (Edge Adaptive Spatial Upsamling), is for upscaling. EASU uses a 12-tap pattern as following:</p>
 <pre><code>  b c
 e f g h
 i j k l
   n o
 </code></pre><p>These 12 taps are convoluted using a stretched lanczos(2) kernel. The stretch factor is determined from the gradients of nearby pixels. In a nutshell, the final shaped filter is an elliptical kernel whose major axis is perpendicular to the gradient of the current pixel.</p>
-<p>The second pass is called RCAS (Robust Contract Adaptive Sharpening), which is used for enhancing the image details. RCAS uses a 5 tap sharpening filter in a cross pattern:</p>
+<p>The second pass is called RCAS (Robust Contract Adaptive Sharpening), which is used for enhancing the image details. RCAS uses a 5 tap sharpening operator in a cross pattern:</p>
 <pre><code>  w   
 w 1 w 
   w   
 </code></pre><p>The negative weight &lsquo;w&rsquo; is carefully chosen per pixel to avoid clipping (exceeds the [0, 1] range).</p>
 <h2 id="fsr-optimization">FSR Optimization<a href="#fsr-optimization" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
-<p>We integrated AMD FSR into our engine, and it worked great on PCs. Good performance and nice image quality, AMD YES!!!. Then we tested it on an iPhone 12 with great expectations, but the result frustrated us a lot. The EASU pass takes about 5.4 ms, and RCAS takes about 0.9 ms. A 6.3 ms cost in total is absolutely unacceptable.</p>
+<p>We integrated AMD FSR into our engine, and it worked great on PCs. Good performance and nice image quality, AMD YES!!!. Then we tested it on an iPhone 12 <sup id="fnref:1"><a href="#fn:1" class="footnote-ref" role="doc-noteref">1</a></sup> with great expectations, but the result frustrated us a lot. The EASU pass takes about 5.4 ms, and RCAS takes about 0.9 ms. A 6.3 ms cost in total is absolutely unacceptable.</p>
 <p>Ok, can we optimize it? Because the cost of the RCAS is reasonable to some extent, our attention is focused on the EASU pass. After several attempts, we managed to reduce the EASU cost from 5.4 ms to 1.8 ms, which is apparently a big win. The following describes how we do that.</p>
 <h3 id="1-using-half-precision">1. Using Half Precision<a href="#1-using-half-precision" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
 <p>At first we used the f32 version of EASU for simplicity, but on mobile devices f16 operations are basically twice the throughput of f32 operations. Since our shader system doesn&rsquo;t support uint16/int16, we have to tweak the original <code>FsrEasuH</code> code a little bit to make it compiles. Simple modification but high profit, the f16 version only takes 4.7 ms.</p>
@@ -140,7 +140,7 @@ w 1 w
   <span class="p">}</span>
 </code></pre></div><p>Since most threadgroups go into this early-quit branch, the cost should be reduced a lot. But after profiling we only see a 0.2 ms improvement. Although the ALU pressure reduced rapidly, the GPU counters show that now the shader is completely texture bound.</p>
 <h3 id="5-less-texture-fetch">5. Less Texture Fetch<a href="#5-less-texture-fetch" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
-<p>So we have to optimize the texture ops. Let&rsquo;s focus on the early-quit code path: In this path, we only need 5 bilinear interpolated lumas to ensure this pixel falls into the non-edge case. How about we sample these 5 taps directly using a bilinear sampler, and defer other taps until we really need them? Not only can it save texture fetches for the early-quit path, but it also saves some ALUs that do the bilinear interpolation manually.</p>
+<p>So we have to optimize the TEX ops. Let&rsquo;s focus on the early-quit code path: In this path, we only need 5 bilinear interpolated lumas to ensure this pixel falls into the non-edge case. How about we sample these 5 taps directly using a bilinear sampler, and defer other taps until we really need them? Not only can it save texture fetches for the early-quit path, but it also saves some ALUs that do the bilinear interpolation manually.</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-cpp" data-lang="cpp">  <span class="n">AF2</span> <span class="n">pp</span><span class="o">=</span><span class="p">(</span><span class="n">ip</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">con0</span><span class="p">.</span><span class="n">xy</span><span class="p">)</span><span class="o">+</span><span class="p">(</span><span class="n">con0</span><span class="p">.</span><span class="n">zw</span><span class="p">);</span>
   <span class="n">AF2</span> <span class="n">tc</span><span class="o">=</span><span class="p">(</span><span class="n">pp</span><span class="o">+</span><span class="n">AF2_</span><span class="p">(</span><span class="mf">0.5</span><span class="p">))</span><span class="o">*</span><span class="n">con1</span><span class="p">.</span><span class="n">xy</span><span class="p">;</span>
   <span class="n">AH3</span> <span class="n">sA</span><span class="o">=</span><span class="n">FsrEasuSampleH</span><span class="p">(</span><span class="n">tc</span><span class="o">-</span><span class="n">AF2</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">con1</span><span class="p">.</span><span class="n">y</span><span class="p">));</span>
@@ -155,9 +155,17 @@ w 1 w
   <span class="n">AH1</span> <span class="n">lE</span><span class="o">=</span><span class="n">sE</span><span class="p">.</span><span class="n">r</span><span class="o">*</span><span class="n">AH1_</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span><span class="o">+</span><span class="n">sE</span><span class="p">.</span><span class="n">g</span><span class="p">;</span>
 </code></pre></div><p>This change improves the performance dramatically, the EASU cost goes from 3.6 ms to 1.8 ms. Now the total cost of FSR is 1.8 ms (EASU) + 0.9 ms (RCAS) = 2.7 ms. Don&rsquo;t forget without FSR we still need a pass to copy the offscreen target to back buffer, which takes about 0.7 ms. So the net cost of our optimized FSR is 2.7 ms - 0.7 ms = 2.0 ms. Not extremely efficient but we are satisfied.</p>
 <h2 id="source-code">Source Code<a href="#source-code" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
-<p>OK, that&rsquo;s it. The full source code is listed below, hope you find it useful. If you have any questions or have other ideas to optimize it further, please don&rsquo;t hesitate to leave a comment.</p>
+<p>OK, that&rsquo;s it. The full source code is listed below (<a href="https://gist.github.com/atyuwen/78d6e810e6d0f7fd4aa6207d416f2eeb">Gist</a>), hope you find it useful. If you have any questions or have other ideas to optimize it further, please don&rsquo;t hesitate to leave a comment.</p>
 <script type="application/javascript" src="https://gist.github.com/atyuwen/78d6e810e6d0f7fd4aa6207d416f2eeb.js"></script>
 
+<section class="footnotes" role="doc-endnotes">
+<hr>
+<ol>
+<li id="fn:1" role="doc-endnote">
+<p>The native resolution of iPhone 12 is 2532 x 1170, and the render resolution is 0.7x, i.e. 1772 x 819.&#160;<a href="#fnref:1" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+</li>
+</ol>
+</section>
 
 			</div>
 			<hr class="post-end">
@@ -165,7 +173,7 @@ w 1 w
 				<p>
 					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg><span class="tag"><a href="https://atyuwen.github.io/tags/graphics">Graphics</a></span>
 				</p>
-				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>1086 Words</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>1108 Words</p>
 				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2021-08-25 14:12 &#43;0800</p>
 			</footer>
 		</article>
