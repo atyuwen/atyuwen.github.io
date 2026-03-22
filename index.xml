@@ -1,61 +1,6 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
-  <channel>
-    <title>C&#43;&#43; Minor</title>
-    <link>https://atyuwen.github.io/</link>
-    <description>Recent content on C&#43;&#43; Minor</description>
-    <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
-    <copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
-    <lastBuildDate>Wed, 25 Aug 2021 14:12:29 +0800</lastBuildDate><atom:link href="https://atyuwen.github.io/index.xml" rel="self" type="application/rss+xml" />
-    <item>
-      <title>Optimizing AMD FSR for Mobiles</title>
-      <link>https://atyuwen.github.io/posts/optimizing-fsr/</link>
-      <pubDate>Wed, 25 Aug 2021 14:12:29 +0800</pubDate>
-      
-      <guid>https://atyuwen.github.io/posts/optimizing-fsr/</guid>
-      <description>Recently AMD released its super resolution algorithm named FidelityFX Super Resolution (FSR). Compare to its competitor DLSS that can only be enabled on RTX capable cards, FSR doesn&amp;rsquo;t require any particular hardware support, which makes it very attractive for cross-platform games. However, although FSR is highly optimized and runs efficiently on PCs, it is overweight on Mobiles. This article describes how we optimize FSR greatly on an iPhone 12 without sacrificing too much image quality.</description>
-    </item>
-    
-    <item>
-      <title>Fast Divergence-Free Noise Generation in Shaders</title>
-      <link>https://atyuwen.github.io/posts/bitangent-noise/</link>
-      <pubDate>Mon, 17 May 2021 17:42:19 +0800</pubDate>
-      
-      <guid>https://atyuwen.github.io/posts/bitangent-noise/</guid>
-      <description>This article describes a method called &amp;ldquo;Bitangent Noise&amp;rdquo; which can generate divergence-free noise efficiently. The implementation is a single shader without any other dependencies, and both HLSL and GLSL codes are provided for your convenience. The following image (video) shows a particle system that is updated using bitangent noise, and here is a shadertoy example shows how to use bitangent noise to make a smoke ball.
-
-Bitangent Noise Divergence-free noise is an ingenious technique that is extremely suitable for driving particles to move like real fluid motion.</description>
-    </item>
-    
-    <item>
-      <title>Accurate Normal Reconstruction from Depth Buffer</title>
-      <link>https://atyuwen.github.io/posts/normal-reconstruction/</link>
-      <pubDate>Mon, 20 Jan 2020 09:58:17 +0800</pubDate>
-      
-      <guid>https://atyuwen.github.io/posts/normal-reconstruction/</guid>
-      <description>Months ago I read a nice article 1 about normal reconstruction by János Turánszki (@turanszkij), which reminded me that I had also tackled this problem before, but for a different purpose. While Turánszki reconstructed normal from depth buffer for better SSAO, I was aimed for rendering decals.
-In screen-space decals rendering, normal buffer is required to reject pixels projected onto near-perpendicular surfaces. But back then I was working on a forward pipeline, so no normal buffer was outputted.</description>
-    </item>
-    
-    <item>
-      <title>Draw Anti-aliased Lines with Geometry Shader</title>
-      <link>https://atyuwen.github.io/posts/antialiased-line/</link>
-      <pubDate>Wed, 01 Jan 2020 09:20:55 +0800</pubDate>
-      
-      <guid>https://atyuwen.github.io/posts/antialiased-line/</guid>
-      <description>For engine programmers, there are many cases you have to draw lines on screen, e.g. rendering a grid on the ground, drawing bounding boxes and other helper objects. Usually it&amp;rsquo;s not a problem if you are very used to the jaggies, but recently I can&amp;rsquo;t stand it anymore, my eyes complain to me that they want anti-aliased lines. After a quick search on google, it surprises me that there is no existing handy code piece can meet my needs.</description>
-    </item>
-    
-    <item>
-      <title>About C&#43;&#43; Minor</title>
-      <link>https://atyuwen.github.io/about/</link>
-      <pubDate>Sat, 28 Dec 2019 21:02:15 +0800</pubDate>
-      
-      <guid>https://atyuwen.github.io/about/</guid>
-      <description>I&amp;rsquo;m Yuwen Wu (id: atyuwen), a senior graphics &amp;amp; engine programmer at Netease Games. I&amp;rsquo;m currently working on an in-house cross-platform game engine named Messiah Engine.
-Over the past decade, I gained a lot from so many excellent blogs. Now it&amp;rsquo;s the 2020s, I&amp;rsquo;ve decided to start my own blog: C++ Minor, and wish I could also share something usefull to the community &amp;mdash; mostly about algorithms and computer graphics. Following are some additional things I&amp;rsquo;d like to declare:</description>
-    </item>
-    
-  </channel>
-</rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>C++ Minor</title><link>https://atyuwen.github.io/</link><description>Recent content on C++ Minor</description><generator>Hugo</generator><language>en-us</language><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Wed, 25 Aug 2021 14:12:29 +0800</lastBuildDate><atom:link href="https://atyuwen.github.io/index.xml" rel="self" type="application/rss+xml"/><item><title>Optimizing AMD FSR for Mobiles</title><link>https://atyuwen.github.io/posts/optimizing-fsr/</link><pubDate>Wed, 25 Aug 2021 14:12:29 +0800</pubDate><guid>https://atyuwen.github.io/posts/optimizing-fsr/</guid><description>&lt;p&gt;Recently AMD released its super resolution algorithm named &lt;a href="https://gpuopen.com/fidelityfx-superresolution/"&gt;FidelityFX Super Resolution (FSR)&lt;/a&gt;. Compare to its competitor &lt;a href="https://www.nvidia.com/en-us/geforce/technologies/dlss/"&gt;DLSS&lt;/a&gt; that can only be enabled on RTX capable cards, FSR doesn&amp;rsquo;t require any particular hardware support, which makes it very attractive for cross-platform games. However, although FSR is highly optimized and runs efficiently on PCs, it is overweight on Mobiles. This article describes how we optimize FSR greatly on an iPhone 12 without sacrificing too much image quality.&lt;/p&gt;</description></item><item><title>Fast Divergence-Free Noise Generation in Shaders</title><link>https://atyuwen.github.io/posts/bitangent-noise/</link><pubDate>Mon, 17 May 2021 17:42:19 +0800</pubDate><guid>https://atyuwen.github.io/posts/bitangent-noise/</guid><description>&lt;p&gt;This article describes a method called &amp;ldquo;Bitangent Noise&amp;rdquo; which can generate divergence-free noise efficiently. The &lt;a href="https://github.com/atyuwen/bitangent_noise/"&gt;implementation&lt;/a&gt; is a single shader without any other dependencies, and both HLSL and GLSL codes are provided for your convenience. The following image (&lt;a href="https://youtu.be/KbdQgGWJ_tA"&gt;video&lt;/a&gt;) shows a particle system that is updated using bitangent noise, and here is a &lt;a href="https://www.shadertoy.com/view/ftl3zN"&gt;shadertoy example&lt;/a&gt; shows how to use bitangent noise to make a smoke ball.&lt;/p&gt;
+&lt;p&gt;&lt;a href="https://youtu.be/KbdQgGWJ_tA"&gt;&lt;img src="https://github.com/atyuwen/bitangent_noise/blob/main/image.png?raw=true" alt="image"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;h2 id="bitangent-noise"&gt;Bitangent Noise&lt;/h2&gt;
+&lt;p&gt;Divergence-free noise is an ingenious technique that is extremely suitable for driving particles to move like real fluid motion. The most widely used divergence-free noise generator is called &lt;strong&gt;Curl Noise&lt;/strong&gt; &lt;sup id="fnref:1"&gt;&lt;a href="#fn:1" class="footnote-ref" role="doc-noteref"&gt;1&lt;/a&gt;&lt;/sup&gt;, I first knew it from smash&amp;rsquo;s great article &lt;sup id="fnref:2"&gt;&lt;a href="#fn:2" class="footnote-ref" role="doc-noteref"&gt;2&lt;/a&gt;&lt;/sup&gt; about the making of the &lt;a href="https://www.youtube.com/watch?v=VCpYH8yDK8g"&gt;blunderbuss&lt;/a&gt; demo, in which the fluid effect impressed me deeply. Later I also tried to reproduce that effect &lt;a href="https://github.com/atyuwen/efflux"&gt;(github project)&lt;/a&gt;, though the result is not as good as smash&amp;rsquo;s masterpiece.&lt;/p&gt;</description></item><item><title>Accurate Normal Reconstruction from Depth Buffer</title><link>https://atyuwen.github.io/posts/normal-reconstruction/</link><pubDate>Mon, 20 Jan 2020 09:58:17 +0800</pubDate><guid>https://atyuwen.github.io/posts/normal-reconstruction/</guid><description>&lt;p&gt;Months ago I read a nice article &lt;sup id="fnref:1"&gt;&lt;a href="#fn:1" class="footnote-ref" role="doc-noteref"&gt;1&lt;/a&gt;&lt;/sup&gt; about normal reconstruction by János Turánszki (@turanszkij), which reminded me that I had also tackled this problem before, but for a different purpose. While Turánszki reconstructed normal from depth buffer for better SSAO, I was aimed for rendering decals.&lt;/p&gt;
+&lt;p&gt;In screen-space decals rendering, normal buffer is required to reject pixels projected onto near-perpendicular surfaces. But back then I was working on a forward pipeline, so no normal buffer was outputted. It seemed the best choice was to reconstruct it directly from depth buffer, as long as we could avoid introducing errors, which was not easy though. Fortunately, accurate normal reconstruction is impossible in theory but possible in practice, we eventually found a way inspired by Humus&amp;rsquo;s SDAA idea &lt;sup id="fnref:2"&gt;&lt;a href="#fn:2" class="footnote-ref" role="doc-noteref"&gt;2&lt;/a&gt;&lt;/sup&gt;, which is more accurate but also more expensive than Turánszki&amp;rsquo;s method. However, it&amp;rsquo;s worth the cost because decals are highly sensitive to the reconstruction errors. Following shows decals rendered in purple with different normal reconstruction strategies.&lt;/p&gt;</description></item><item><title>Draw Anti-aliased Lines with Geometry Shader</title><link>https://atyuwen.github.io/posts/antialiased-line/</link><pubDate>Wed, 01 Jan 2020 09:20:55 +0800</pubDate><guid>https://atyuwen.github.io/posts/antialiased-line/</guid><description>&lt;p&gt;For engine programmers, there are many cases you have to draw lines on screen, e.g. rendering a grid on the ground, drawing bounding boxes and other helper objects. Usually it&amp;rsquo;s not a problem if you are very used to the jaggies, but recently I can&amp;rsquo;t stand it anymore, my eyes complain to me that they want anti-aliased lines. After a quick search on google, it surprises me that there is no existing handy code piece can meet my needs. So, it&amp;rsquo;s time to do research!&lt;/p&gt;</description></item><item><title>About C++ Minor</title><link>https://atyuwen.github.io/about/</link><pubDate>Sat, 28 Dec 2019 21:02:15 +0800</pubDate><guid>https://atyuwen.github.io/about/</guid><description>&lt;p&gt;I&amp;rsquo;m Yuwen Wu (id: atyuwen), a senior graphics &amp;amp; engine programmer at Netease Games. I&amp;rsquo;m currently working on an in-house cross-platform game engine named &lt;strong&gt;Messiah Engine&lt;/strong&gt;.&lt;/p&gt;
+&lt;p&gt;Over the past decade, I gained a lot from so many excellent blogs. Now it&amp;rsquo;s the 2020s, I&amp;rsquo;ve decided to start my own blog: &lt;strong&gt;C++ Minor&lt;/strong&gt;, and wish I could also share something usefull to the community &amp;mdash; mostly about algorithms and computer graphics. Following are some additional things I&amp;rsquo;d like to declare:&lt;/p&gt;</description></item></channel></rss>
