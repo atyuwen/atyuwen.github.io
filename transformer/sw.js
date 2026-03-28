@@ -1,4 +1,4 @@
-var CACHE_NAME = 'transformer-v1';
+var CACHE_NAME = 'transformer-v2';
 var URLS_TO_CACHE = ['./', './index.html'];
 
 self.addEventListener('install', function(event) {
